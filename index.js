@@ -12,7 +12,7 @@ const client = new Client({
     ],
 });
 
-const MODEL = "mistralai/Mistral-7B-Instruct-v0.1";
+const MODEL = "microsoft/Phi-3.5-mini-instruct";
 
 async function getAIGeneratedTip() {
     const prompt =
