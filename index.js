@@ -1,6 +1,8 @@
-require("dotenv").config();
-const { Client, GatewayIntentBits } = require("discord.js");
-const axios = require("axios");
+import dotenv from "dotenv";
+import axios from "axios";
+import { Client, GatewayIntentBits } from "discord.js";
+
+dotenv.config();
 
 const client = new Client({
     intents: [
@@ -10,7 +12,7 @@ const client = new Client({
     ],
 });
 
-const MODEL = "mistralai/Mistral-7B-Instruct-v0.1"; // Hugging Face-modell
+const MODEL = "mistralai/Mistral-7B-Instruct-v0.1";
 
 async function getAIGeneratedTip() {
     const prompt =
