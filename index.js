@@ -64,7 +64,7 @@ process.on("SIGINT", async () => {
     process.exit();
 });
 
-const MAX_LENGTH = 4000;
+const MAX_LENGTH = 2000;
 
 client.once("ready", () => {
     console.log(`🤖 Bot inloggad som ${client.user.tag}`);
