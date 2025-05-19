@@ -27,9 +27,10 @@ await mongo.connect();
 async function getAIGeneratedTip() {
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
-        "Ge exakt 1 avancerat tips, tekniker eller trender inom frontendutveckling som är relevanta för 2025. " +
-        "Ge därefter exakt 1 viktigt koncept inom frontendutveckling och förklara dem på ett pedagogiskt sätt för frontendstudenter. " +
-        "Undvik att upprepa tips och håll svaret tydligt uppdelat i sektioner. Svara utan hälsningsfras. Slumpnummer: " +
+        "Ge exakt 3 avancerade eller mindre kända tips, tekniker eller trender inom frontendutveckling som är relevanta för 2025. " +
+        "Undvik vanliga tips som 'använd React', 'använd TypeScript', 'responsiv design', 'tillgänglighet', 'semantisk HTML', 'använd Git', 'testa din kod', 'använd CSS-ramverk', eller liknande grundläggande råd. " +
+        "Fokusera på nya verktyg, tekniker, arbetsflöden eller koncept som få frontendstudenter känner till. " +
+        "Svara utan hälsningsfras och håll svaret kortfattat. Slumpnummer: " +
         randomSeed;
 
     const db = mongo.db(dbName);
@@ -39,12 +40,10 @@ async function getAIGeneratedTip() {
     let tries = 0;
     do {
         tries++;
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash-preview-04-17",
-        });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 1.3 },
+            generationConfig: { temperature: 1.5 },
         });
         const response = await result.response;
         tip = response.text();
