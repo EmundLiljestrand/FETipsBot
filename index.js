@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import axios from "axios";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Client, GatewayIntentBits } from "discord.js";
 
 dotenv.config();
@@ -12,29 +12,20 @@ const client = new Client({
     ],
 });
 
-const MODEL = "microsoft/Phi-3.5-mini-instruct";
+const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY);
 
 async function getAIGeneratedTip() {
     const prompt =
         "Ge exempel på koncept, idéer eller vad som är inne i frontend utvecklare branschen just nu. Riktat mot frontendutvecklar studenter. Max 3 meningar.";
 
     try {
-        const response = await axios.post(
-            `https://api-inference.huggingface.co/models/${MODEL}`,
-            { inputs: prompt },
-            {
-                headers: {
-                    Authorization: `Bearer ${process.env.HF_API_KEY}`,
-                },
-            }
-        );
-
-        const generated =
-            response.data?.[0]?.generated_text ||
-            "Tipset kunde inte hämtas just nu.";
-        return generated.replace(prompt, "").trim();
+        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        const text = response.text();
+        return text || "Tipset kunde inte hämtas just nu.";
     } catch (error) {
-        console.error("HF API-fel:", error.message);
+        console.error("Gemini API-fel:", error.message);
         return "❌ Kunde inte hämta tips från AI just nu.";
     }
 }
