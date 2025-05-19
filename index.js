@@ -31,7 +31,7 @@ async function getAIGeneratedTip() {
         "Ge därefter exakt 2 avancerade eller mindre kända tips eller trender inom frontendutveckling som är relevanta för 2025. " +
         "Avsluta med att kortfattat förklara ett nytt eller viktigt koncept inom frontendutveckling för frontendstudenter. " +
         "Undvik att upprepa tips och håll svaret tydligt uppdelat i sektioner. Svara utan hälsningsfras. Slumpnummer: " +
-        "Undvik att formulera starta med 'Här är några tips' eller liknande. " +
+        "Undvik att rubricera med 'Här är några tips, generella tips:, Avancerade/Mindre Kända Tips/Trender för 2025:, Nytt/Viktigt Koncept för Frontendstudenter:' eller liknande. " +
         randomSeed;
 
     const db = mongo.db(dbName);
