@@ -20,11 +20,13 @@ const mongo = new MongoClient(process.env.MONGODB_URI);
 const dbName = "discbot";
 const collectionName = "tips";
 
+// Anslut till MongoDB en gång när boten startar
+await mongo.connect();
+
 async function getAIGeneratedTip() {
     const prompt =
         "Ge exempel på koncept, idéer eller vad som är inne i frontend utvecklare branschen just nu. Riktat mot frontendutvecklar studenter. Skippa hälsningsfraser och var kortfattad. ";
 
-    await mongo.connect();
     const db = mongo.db(dbName);
     const tipsCol = db.collection(collectionName);
 
@@ -44,10 +46,14 @@ async function getAIGeneratedTip() {
         }
     } while (tries < 5);
 
-    await mongo.close();
-
     return tip || "Tipset kunde inte hämtas just nu.";
 }
+
+// Stäng anslutningen när processen avslutas
+process.on("SIGINT", async () => {
+    await mongo.close();
+    process.exit();
+});
 
 client.once("ready", () => {
     console.log(`🤖 Bot inloggad som ${client.user.tag}`);
