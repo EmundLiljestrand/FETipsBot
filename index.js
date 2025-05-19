@@ -19,7 +19,7 @@ async function getAIGeneratedTip() {
         "Ge exempel på koncept, idéer eller vad som är inne i frontend utvecklare branschen just nu. Riktat mot frontendutvecklar studenter. Max 3 meningar.";
 
     try {
-        const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const text = response.text();
