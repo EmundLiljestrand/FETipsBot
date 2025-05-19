@@ -67,7 +67,11 @@ client.once("ready", () => {
             const channel = await client.channels.fetch(channelId);
             if (channel && channel.isTextBased()) {
                 const tip = await getAIGeneratedTip();
-                channel.send(`💡 **Dagens frontend-tips:**\n${tip}`);
+                try {
+                    channel.send(`💡 **Dagens frontend-tips:**\n${tip}`);
+                } catch (err) {
+                    console.error("Kunde inte skicka meddelande:", err);
+                }
             }
         },
         {
