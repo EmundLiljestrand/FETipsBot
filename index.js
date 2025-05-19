@@ -70,9 +70,9 @@ client.once("ready", () => {
 
     // Skicka tips varje dag kl 09:00 (svensk tid)
     cron.schedule(
-        "* * * * *",
+        "0 9 * * *",
         async () => {
-            const channelId = "1373992109668831315";
+            const channelId = "1373995255971582003";
             const channel = await client.channels.fetch(channelId);
             if (channel && channel.isTextBased()) {
                 const tip = await getAIGeneratedTip();
