@@ -27,11 +27,9 @@ await mongo.connect();
 async function getAIGeneratedTip() {
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
-        "Ge exakt 2 generella tips inom frontendutveckling (t.ex. om HTML, CSS, JavaScript, React, Node.js, arbetsflöde, ramverk eller verktyg). " +
-        "Ge därefter exakt 2 avancerade eller mindre kända tips eller trender inom frontendutveckling som är relevanta för 2025. " +
-        "Avsluta med att kortfattat förklara ett nytt eller viktigt koncept inom frontendutveckling för frontendstudenter. " +
+        "Ge exakt 2 avancerade tips, tekniker eller trender inom frontendutveckling som är relevanta för 2025. " +
+        "Ge därefter exakt 2 viktiga koncept inom frontendutveckling och förklara dem på ett pedagogiskt sätt för frontendstudenter. " +
         "Undvik att upprepa tips och håll svaret tydligt uppdelat i sektioner. Svara utan hälsningsfras. Slumpnummer: " +
-        "Undvik att rubricera med 'Här är några tips, generella tips:, Avancerade/Mindre Kända Tips/Trender för 2025:, Nytt/Viktigt Koncept för Frontendstudenter:' eller liknande. " +
         randomSeed;
 
     const db = mongo.db(dbName);
