@@ -25,8 +25,11 @@ const collectionName = "tips";
 await mongo.connect();
 
 async function getAIGeneratedTip() {
+    // Lägg till ett slumpmässigt nummer i prompten
+    const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
-        "Ge exempel på koncept, idéer eller vad som är inne i frontend utvecklare branschen just nu. Riktat mot frontendutvecklar studenter. Skippa hälsningsfrasen. Max 5 tips.";
+        "Ge exempel på koncept, idéer eller vad som är inne i frontend utvecklare branschen just nu. Riktat mot frontendutvecklar studenter. Skippa hälsningsfrasen. Max 5 tips. " +
+        `Slumpnummer: ${randomSeed}`;
 
     const db = mongo.db(dbName);
     const tipsCol = db.collection(collectionName);
@@ -36,13 +39,17 @@ async function getAIGeneratedTip() {
     do {
         tries++;
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-        const result = await model.generateContent(prompt);
+        const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: prompt }] }],
+            generationConfig: { temperature: 0.9 },
+        });
         const response = await result.response;
         tip = response.text();
         // Kolla om tipset redan finns i databasen
-        const exists = await tipsCol.findOne({ text: tip });
+        const normalizedTip = tip.trim().toLowerCase();
+        const exists = await tipsCol.findOne({ text: normalizedTip });
         if (!exists && tip) {
-            await tipsCol.insertOne({ text: tip, date: new Date() });
+            await tipsCol.insertOne({ text: normalizedTip, date: new Date() });
             break;
         }
     } while (tries < 5);
@@ -63,9 +70,9 @@ client.once("ready", () => {
 
     // Skicka tips varje dag kl 09:00 (svensk tid)
     cron.schedule(
-        "0 9 * * *",
+        "* * * * *",
         async () => {
-            const channelId = "1373766004215255063";
+            const channelId = "1373992109668831315";
             const channel = await client.channels.fetch(channelId);
             if (channel && channel.isTextBased()) {
                 const tip = await getAIGeneratedTip();
