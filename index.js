@@ -2,6 +2,7 @@ import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Client, GatewayIntentBits } from "discord.js";
 import { MongoClient } from "mongodb";
+import cron from "node-cron";
 
 dotenv.config();
 
@@ -25,7 +26,7 @@ await mongo.connect();
 
 async function getAIGeneratedTip() {
     const prompt =
-        "Ge exempel på koncept, idéer eller vad som är inne i frontend utvecklare branschen just nu. Riktat mot frontendutvecklar studenter. Skippa hälsningsfraser och var kortfattad. ";
+        "Ge exempel på koncept, idéer eller vad som är inne i frontend utvecklare branschen just nu. Riktat mot frontendutvecklar studenter. Skippa hälsningsfrasen.";
 
     const db = mongo.db(dbName);
     const tipsCol = db.collection(collectionName);
@@ -57,6 +58,22 @@ process.on("SIGINT", async () => {
 
 client.once("ready", () => {
     console.log(`🤖 Bot inloggad som ${client.user.tag}`);
+
+    // Skicka tips varje dag kl 09:00 (svensk tid)
+    cron.schedule(
+        "0 9 * * *",
+        async () => {
+            const channelId = "1373766004215255063";
+            const channel = await client.channels.fetch(channelId);
+            if (channel && channel.isTextBased()) {
+                const tip = await getAIGeneratedTip();
+                channel.send(`💡 **Dagens frontend-tips:**\n${tip}`);
+            }
+        },
+        {
+            timezone: "Europe/Stockholm",
+        }
+    );
 });
 
 client.on("messageCreate", async (message) => {
