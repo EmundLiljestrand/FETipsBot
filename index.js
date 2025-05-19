@@ -28,8 +28,9 @@ async function getAIGeneratedTip() {
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
         "Ge exakt 3 användbara och pedagogiska tips inom frontendutveckling som passar studenter år 2025. " +
-        "Tipsen ska vara enkla att förstå och använda, och gärna förklara varför de är viktiga. Undvik avancerade eller alltför tekniska tips. " +
-        "Avsluta med att kort förklara 1 grundläggande koncept inom frontendutveckling på ett enkelt sätt. Svara utan hälsningsfras. Slumpnummer: " +
+        "Varje tips ska vara max 2 meningar långt. " +
+        "Avsluta med att kort förklara 1 grundläggande koncept inom frontendutveckling på max 3 meningar. " +
+        "Svara utan hälsningsfras och håll hela svaret kortfattat. Max 12 meningar totalt. Slumpnummer: " +
         randomSeed;
 
     const db = mongo.db(dbName);
@@ -62,8 +63,9 @@ async function getAIGeneratedBackendTip() {
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
         "Ge exakt 3 användbara och pedagogiska tips inom backendutveckling som passar nybörjare eller studenter år 2025. " +
-        "Tipsen ska vara enkla att förstå och använda, och gärna förklara varför de är viktiga. Undvik avancerade eller alltför tekniska tips. " +
-        "Avsluta med att kort förklara 1 grundläggande koncept inom backendutveckling på ett enkelt sätt. Svara utan hälsningsfras. Slumpnummer: " +
+        "Varje tips ska vara max 2 meningar långt. " +
+        "Avsluta med att kort förklara 1 grundläggande koncept inom backendutveckling på max 3 meningar. " +
+        "Svara utan hälsningsfras och håll hela svaret kortfattat. Max 12 meningar totalt. Slumpnummer: " +
         randomSeed;
 
     const db = mongo.db(dbName);
@@ -96,9 +98,8 @@ async function getAIGeneratedFullstackTip() {
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
         "Ge exakt 3 avancerade eller mindre kända tips, tekniker eller trender inom fullstackutveckling (både frontend och backend) som är relevanta för 2025. " +
-        "Undvik vanliga tips som 'använd React', 'använd Node.js', 'responsiv design', 'testa din kod', eller liknande grundläggande råd. " +
-        "Fokusera på nya verktyg, tekniker, arbetsflöden eller koncept som få studenter känner till. " +
-        "Svara utan hälsningsfras och håll svaret kortfattat. Slumpnummer: " +
+        "Varje tips ska vara max 2 meningar långt. " +
+        "Svara utan hälsningsfras och håll hela svaret kortfattat. Max 7 meningar totalt. Slumpnummer: " +
         randomSeed;
 
     const db = mongo.db(dbName);
