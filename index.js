@@ -39,7 +39,9 @@ async function getAIGeneratedTip() {
     let tries = 0;
     do {
         tries++;
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+        const model = genAI.getGenerativeModel({
+            model: "Gemini-2.5-Flash-Preview-04-17",
+        });
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: { temperature: 1.3 },
