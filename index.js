@@ -40,7 +40,7 @@ async function getAIGeneratedTip() {
     do {
         tries++;
         const model = genAI.getGenerativeModel({
-            model: "Gemini-2.5-Flash-Preview-04-17",
+            model: "gemini-2.5-flash-preview-04-17",
         });
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
