@@ -28,7 +28,7 @@ async function getAIGeneratedTip() {
     // Lägg till ett slumpmässigt nummer i prompten
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
-        "Ge ett avancerat, mindre känt tips eller trend inom frontendutveckling som är relevant för 2025. Undvik grundläggande saker som React, TypeScript och responsiv design. Fokusera på nya verktyg, tekniker eller arbetsflöden som få känner till. Svara kortfattat och utan hälsningsfras. Max 2-4 tips. Slumpnummer: " +
+        "Ge ett avancerat, mindre känt tips eller trend inom frontendutveckling som är relevant för 2025. Undvik grundläggande saker som React, TypeScript och responsiv design. Fokusera på nya verktyg, tekniker eller arbetsflöden som få känner till. Svara kortfattat men förklarande och utan hälsningsfras. Max 3-4 tips. Slumpnummer: " +
         randomSeed;
 
     const db = mongo.db(dbName);
