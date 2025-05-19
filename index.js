@@ -28,8 +28,8 @@ async function getAIGeneratedTip() {
     // Lägg till ett slumpmässigt nummer i prompten
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
-        "Ge exempel på koncept, idéer eller vad som är inne i frontend utvecklare branschen just nu. Riktat mot frontendutvecklar studenter. Skippa hälsningsfrasen. Max 5 tips. " +
-        `Slumpnummer: ${randomSeed}`;
+        "Ge ett avancerat, mindre känt tips eller trend inom frontendutveckling som är relevant för 2025. Undvik grundläggande saker som React, TypeScript och responsiv design. Fokusera på nya verktyg, tekniker eller arbetsflöden som få känner till. Svara kortfattat och utan hälsningsfras. Max 2-4 tips. Slumpnummer: " +
+        randomSeed;
 
     const db = mongo.db(dbName);
     const tipsCol = db.collection(collectionName);
@@ -41,7 +41,7 @@ async function getAIGeneratedTip() {
         const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
-            generationConfig: { temperature: 0.9 },
+            generationConfig: { temperature: 1.3 },
         });
         const response = await result.response;
         tip = response.text();
