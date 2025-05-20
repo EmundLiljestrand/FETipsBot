@@ -27,7 +27,7 @@ await mongo.connect();
 async function getAIGeneratedTip() {
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
-        "Ge exakt 3 användbara och pedagogiska tips inom frontendutveckling som passar studenter år 2025. " +
+        "Ge exakt 3 användbara, avancerade och mindre kända tips inom frontendutveckling som passar studenter år 2025. " +
         "Varje tips ska vara max 2 meningar långt. " +
         "Avsluta med att kort förklara 1 grundläggande koncept inom frontendutveckling på max 3 meningar. " +
         "Svara utan hälsningsfras och håll hela svaret kortfattat. Max 12 meningar totalt. Slumpnummer: " +
@@ -99,6 +99,7 @@ async function getAIGeneratedFullstackTip() {
     const prompt =
         "Ge exakt 3 avancerade eller mindre kända tips, tekniker eller trender inom fullstackutveckling (både frontend och backend) som är relevanta för 2025. " +
         "Varje tips ska vara max 2 meningar långt. " +
+        "Avsluta med att kort förklara 1 grundläggande koncept inom backendutveckling på max 3 meningar. " +
         "Svara utan hälsningsfras och håll hela svaret kortfattat. Max 7 meningar totalt. Slumpnummer: " +
         randomSeed;
 
@@ -163,9 +164,9 @@ client.once("ready", () => {
         }
     );
 
-    // Skicka backend-tips varje dag kl 09:01 (svensk tid)
+    // Skicka backend-tips varje dag kl 10:00 (svensk tid)
     cron.schedule(
-        "1 9 * * *",
+        "0 10 * * *",
         async () => {
             const channelId = "1373995255971582003";
             const channel = await client.channels.fetch(channelId);
@@ -187,9 +188,9 @@ client.once("ready", () => {
         }
     );
 
-    // Skicka fullstack-tips varje dag kl 09:02 (svensk tid)
+    // Skicka fullstack-tips varje dag kl 11.00 (svensk tid)
     cron.schedule(
-        "2 9 * * *",
+        "0 11 * * *",
         async () => {
             const channelId = "1373995255971582003";
             const channel = await client.channels.fetch(channelId);
