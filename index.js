@@ -29,7 +29,7 @@ async function getAIGeneratedTip() {
     const prompt =
         "Ge exakt 3 användbara, avancerade och mindre kända tips inom frontendutveckling som passar studenter år 2025. " +
         "Varje tips ska vara max 2 meningar långt. " +
-        "Avsluta med att kort förklara 1 grundläggande koncept inom frontendutveckling på max 3 meningar. " +
+        "Avsluta med att kort förklara 1 koncept inom frontendutveckling på max 3 meningar. " +
         "Svara utan hälsningsfras och håll hela svaret kortfattat. Max 12 meningar totalt. Slumpnummer: " +
         randomSeed;
 
@@ -97,9 +97,9 @@ async function getAIGeneratedBackendTip() {
 async function getAIGeneratedFullstackTip() {
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
-        "Ge exakt 3 avancerade eller mindre kända tips, tekniker eller trender inom fullstackutveckling (både frontend och backend) som är relevanta för 2025. " +
+        "Ge exakt 3 tips, tricks, tekniker eller trender inom fullstackutveckling (både frontend och backend) som är relevanta för 2025. " +
         "Varje tips ska vara max 2 meningar långt. " +
-        "Avsluta med att kort förklara 1 grundläggande koncept inom backendutveckling på max 3 meningar. " +
+        "Avsluta med att kort förklara 1 grundläggande koncept inom fullstackutveckling på max 3 meningar. " +
         "Svara utan hälsningsfras och håll hela svaret kortfattat. Max 7 meningar totalt. Slumpnummer: " +
         randomSeed;
 
@@ -140,73 +140,36 @@ const MAX_LENGTH = 2000;
 client.once("ready", () => {
     console.log(`🤖 Bot inloggad som ${client.user.tag}`);
 
-    // Skicka tips varje dag kl 09:00 (svensk tid)
+    // Skicka ETT tips varje dag kl 09:00 (svensk tid), roterande mellan typer
     cron.schedule(
         "0 9 * * *",
         async () => {
             const channelId = "1373995255971582003";
             const channel = await client.channels.fetch(channelId);
             if (channel && channel.isTextBased()) {
-                const tip = await getAIGeneratedTip();
+                const day = new Date().getDay(); // 0=söndag, 1=måndag, ..., 6=lördag
+                let tip, prefix;
+                if (day === 1 || day === 4 || day === 0) {
+                    // måndag, torsdag, söndag
+                    tip = await getAIGeneratedTip();
+                    prefix = "💡 **Dagens frontend-tips:**";
+                } else if (day === 2 || day === 5) {
+                    // tisdag, fredag
+                    tip = await getAIGeneratedBackendTip();
+                    prefix = "🛠️ **Dagens backend-tips:**";
+                } else {
+                    // onsdag, lördag
+                    tip = await getAIGeneratedFullstackTip();
+                    prefix = "🌐 **Dagens fullstack-tips:**";
+                }
                 const safeTip =
                     tip.length > MAX_LENGTH
                         ? tip.slice(0, MAX_LENGTH - 3) + "..."
                         : tip;
                 try {
-                    channel.send(`💡 **Dagens frontend-tips:**\n${safeTip}`);
+                    channel.send(`${prefix}\n${safeTip}`);
                 } catch (err) {
                     console.error("Kunde inte skicka meddelande:", err);
-                }
-            }
-        },
-        {
-            timezone: "Europe/Stockholm",
-        }
-    );
-
-    // Skicka backend-tips varje dag kl 10:00 (svensk tid)
-    cron.schedule(
-        "0 10 * * *",
-        async () => {
-            const channelId = "1373995255971582003";
-            const channel = await client.channels.fetch(channelId);
-            if (channel && channel.isTextBased()) {
-                const tip = await getAIGeneratedBackendTip();
-                const safeTip =
-                    tip.length > MAX_LENGTH
-                        ? tip.slice(0, MAX_LENGTH - 3) + "..."
-                        : tip;
-                try {
-                    channel.send(`🛠️ **Dagens backend-tips:**\n${safeTip}`);
-                } catch (err) {
-                    console.error("Kunde inte skicka backend-meddelande:", err);
-                }
-            }
-        },
-        {
-            timezone: "Europe/Stockholm",
-        }
-    );
-
-    // Skicka fullstack-tips varje dag kl 11.00 (svensk tid)
-    cron.schedule(
-        "0 11 * * *",
-        async () => {
-            const channelId = "1373995255971582003";
-            const channel = await client.channels.fetch(channelId);
-            if (channel && channel.isTextBased()) {
-                const tip = await getAIGeneratedFullstackTip();
-                const safeTip =
-                    tip.length > MAX_LENGTH
-                        ? tip.slice(0, MAX_LENGTH - 3) + "..."
-                        : tip;
-                try {
-                    channel.send(`🌐 **Dagens fullstack-tips:**\n${safeTip}`);
-                } catch (err) {
-                    console.error(
-                        "Kunde inte skicka fullstack-meddelande:",
-                        err
-                    );
                 }
             }
         },
