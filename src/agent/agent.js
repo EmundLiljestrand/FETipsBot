@@ -7,7 +7,14 @@ import { generatePrompt } from "../utils/prompt-utils.js";
 export class ProgrammingTipsAgent {
     constructor(aiClient, db) {
         this.aiClient = aiClient;
-        this.model = aiClient.getGenerativeModel({ model: "gemini-2.0-flash" });
+        // Initialisera primär modell för generering (Gemini 2.0)
+        this.generatorModel = aiClient.getGenerativeModel({
+            model: "gemini-2.0-flash",
+        });
+        // Initialisera sekundär modell för verifiering (Gemini 2.5)
+        this.verifierModel = aiClient.getGenerativeModel({
+            model: "gemini-2.5-flash-preview-05-20",
+        });
         this.db = db;
         this.schema = AgentSchema;
         this.memory = {
@@ -99,13 +106,11 @@ export class ProgrammingTipsAgent {
                 backendTips,
                 fullstackTips,
                 categoryStats: this.memory.categoryStats,
-            };
-
-            // Generera prompt med hjälp av utility-funktion
+            }; // Generera prompt med hjälp av utility-funktion
             const prompt = generatePrompt("recommendCategory", context);
 
             // Fråga AI-modellen
-            const result = await this.model.generateContent({
+            const result = await this.generatorModel.generateContent({
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
             });
 
@@ -145,12 +150,10 @@ export class ProgrammingTipsAgent {
                 category,
                 recentCategoryTips,
                 reflections: relevantReflections,
-            };
-
-            // Generera prompt för svårighetsgrad
+            }; // Generera prompt för svårighetsgrad
             const prompt = generatePrompt("determineDifficulty", context);
 
-            const result = await this.model.generateContent({
+            const result = await this.generatorModel.generateContent({
                 contents: [{ role: "user", parts: [{ text: prompt }] }],
             });
 
@@ -185,15 +188,22 @@ export class ProgrammingTipsAgent {
             };
 
             const prompt = generatePrompt("frontendTip", context);
-
             let tip = "";
             let tries = 0;
             let normalizedTip = "";
+            let isApproved = false;
+            let verificationResult = {};
 
             // Försök generera ett unikt tips
             do {
                 tries++;
-                const result = await this.model.generateContent({
+                if (tries > 1) {
+                    console.log(
+                        `Försök ${tries} att generera frontend-tips...`
+                    );
+                }
+
+                const result = await this.generatorModel.generateContent({
                     contents: [{ role: "user", parts: [{ text: prompt }] }],
                     generationConfig: { temperature: 1.5 },
                 });
@@ -209,7 +219,22 @@ export class ProgrammingTipsAgent {
                 });
 
                 if (!exists && tip) {
-                    // Spara tipset i databasen
+                    // Verifiera tipset med Gemini 2.5
+                    verificationResult = await this.verifyTipQuality(
+                        tip,
+                        "frontend",
+                        difficulty
+                    );
+                    isApproved = verificationResult.approved;
+
+                    if (!isApproved) {
+                        console.log(
+                            `Frontend-tips avvisat: ${verificationResult.reason}`
+                        );
+                        continue;
+                    }
+
+                    // Tipset godkänt - spara i databasen
                     await this.db.collection("all_tips").insertOne({
                         text: normalizedTip,
                         date: new Date(),
@@ -217,6 +242,7 @@ export class ProgrammingTipsAgent {
                         difficulty: difficulty,
                         topics: ["CSS", "JavaScript", "React"],
                         feedback: [],
+                        verificationScore: verificationResult.score || 0,
                     });
 
                     // Uppdatera agentens minne och statistik
@@ -261,15 +287,20 @@ export class ProgrammingTipsAgent {
             };
 
             const prompt = generatePrompt("backendTip", context);
-
             let tip = "";
             let tries = 0;
             let normalizedTip = "";
+            let isApproved = false;
+            let verificationResult = {};
 
             // Försök generera ett unikt tips
             do {
                 tries++;
-                const result = await this.model.generateContent({
+                if (tries > 1) {
+                    console.log(`Försök ${tries} att generera backend-tips...`);
+                }
+
+                const result = await this.generatorModel.generateContent({
                     contents: [{ role: "user", parts: [{ text: prompt }] }],
                     generationConfig: { temperature: 1.5 },
                 });
@@ -285,7 +316,22 @@ export class ProgrammingTipsAgent {
                 });
 
                 if (!exists && tip) {
-                    // Spara tipset i databasen
+                    // Verifiera tipset med Gemini 2.5
+                    verificationResult = await this.verifyTipQuality(
+                        tip,
+                        "backend",
+                        difficulty
+                    );
+                    isApproved = verificationResult.approved;
+
+                    if (!isApproved) {
+                        console.log(
+                            `Backend-tips avvisat: ${verificationResult.reason}`
+                        );
+                        continue;
+                    }
+
+                    // Tipset godkänt - spara i databasen
                     await this.db.collection("all_tips").insertOne({
                         text: normalizedTip,
                         date: new Date(),
@@ -293,6 +339,7 @@ export class ProgrammingTipsAgent {
                         difficulty: difficulty,
                         topics: ["databaser", "API", "säkerhet"],
                         feedback: [],
+                        verificationScore: verificationResult.score || 0,
                     });
 
                     // Uppdatera agentens minne och statistik
@@ -335,15 +382,22 @@ export class ProgrammingTipsAgent {
             };
 
             const prompt = generatePrompt("fullstackTip", context);
-
             let tip = "";
             let tries = 0;
             let normalizedTip = "";
+            let isApproved = false;
+            let verificationResult = {};
 
             // Försök generera ett unikt tips
             do {
                 tries++;
-                const result = await this.model.generateContent({
+                if (tries > 1) {
+                    console.log(
+                        `Försök ${tries} att generera fullstack-tips...`
+                    );
+                }
+
+                const result = await this.generatorModel.generateContent({
                     contents: [{ role: "user", parts: [{ text: prompt }] }],
                     generationConfig: { temperature: 1.5 },
                 });
@@ -359,7 +413,22 @@ export class ProgrammingTipsAgent {
                 });
 
                 if (!exists && tip) {
-                    // Spara tipset i databasen
+                    // Verifiera tipset med Gemini 2.5
+                    verificationResult = await this.verifyTipQuality(
+                        tip,
+                        "fullstack",
+                        difficulty
+                    );
+                    isApproved = verificationResult.approved;
+
+                    if (!isApproved) {
+                        console.log(
+                            `Fullstack-tips avvisat: ${verificationResult.reason}`
+                        );
+                        continue;
+                    }
+
+                    // Tipset godkänt - spara i databasen
                     await this.db.collection("all_tips").insertOne({
                         text: normalizedTip,
                         date: new Date(),
@@ -367,6 +436,7 @@ export class ProgrammingTipsAgent {
                         difficulty: difficulty,
                         topics: ["integration", "skalbarhet", "prestanda"],
                         feedback: [],
+                        verificationScore: verificationResult.score || 0,
                     });
 
                     // Uppdatera agentens minne och statistik
@@ -407,7 +477,7 @@ export class ProgrammingTipsAgent {
                 "Vad var bra med det? Vad kan förbättras nästa gång? " +
                 "Vilka ämnen bör täckas nästa gång?";
 
-            const reflectionResult = await this.model.generateContent({
+            const reflectionResult = await this.generatorModel.generateContent({
                 contents: [
                     { role: "user", parts: [{ text: reflectionPrompt }] },
                 ],
@@ -439,13 +509,107 @@ export class ProgrammingTipsAgent {
     }
 
     /**
+     * Verifierar kvalitet och unikhet på ett genererat tips med den avancerade Gemini 2.5 modellen
+     * @param {string} tip - Tipset som ska verifieras
+     * @param {string} category - Kategorin (frontend, backend, fullstack)
+     * @param {string} difficulty - Svårighetsgraden (nybörjare, medel, avancerad)
+     * @returns {Promise<{approved: boolean, reason: string, score: number}>}
+     */
+    async verifyTipQuality(tip, category, difficulty) {
+        try {
+            // Hämta de senaste tipsen för jämförelse
+            const previousTips = this.memory.recentTips
+                .filter((t) => t.category === category)
+                .slice(0, 5)
+                .map((t) => t.text);
+
+            const verificationPrompt = `Du är en granskare för programmeringstips inom ${category}-utveckling. 
+                Din uppgift är att utvärdera om följande tips är lämpligt att skicka till våra användare:
+                
+                NYTT TIPS:
+                """
+                ${tip}
+                """
+                
+                Tidigare tips inom samma kategori:
+                ${previousTips.map((t, i) => `${i + 1}. ${t}`).join("\n")}
+                
+                Svårighetsgrad: ${difficulty}
+                
+                Bedöm tipset enligt följande kriterier på en skala 1-10:
+                1. UNIKHET: Är tipset tillräckligt annorlunda från tidigare tips? (1 = duplikat, 10 = helt ny information)
+                2. RELEVANS: Är tipset relevant för ${category}-utvecklare år 2025? (1 = irrelevant, 10 = mycket relevant)
+                3. KORREKTHET: Är innehållet tekniskt korrekt? (1 = felaktigt, 10 = helt korrekt)
+                4. SVÅRIGHETSNIVÅ: Motsvarar svårighetsgraden "${difficulty}"? (1 = helt fel nivå, 10 = perfekt nivå)
+                
+                Svara ENDAST med ett JSON-objekt med följande format:
+                {
+                    "uniqueness": x,
+                    "relevance": x,
+                    "correctness": x,
+                    "difficulty_match": x,
+                    "total_score": x,
+                    "approved": true/false,
+                    "reason": "kort förklaring till beslutet"
+                }`;
+
+            const result = await this.verifierModel.generateContent({
+                contents: [
+                    { role: "user", parts: [{ text: verificationPrompt }] },
+                ],
+            });
+
+            const responseText = result.response.text().trim();
+
+            try {
+                // Försök tolka svaret som JSON
+                const assessment = JSON.parse(responseText);
+                console.log(
+                    `Tip verification results: ${JSON.stringify(assessment)}`
+                );
+
+                // Godkänn tipset om totalpoängen är 7 eller högre, eller om approved är true
+                return {
+                    approved:
+                        assessment.approved === undefined
+                            ? assessment.total_score >= 7
+                            : assessment.approved,
+                    reason: assessment.reason || "Ingen motivering tillgänglig",
+                    score: assessment.total_score || 0,
+                };
+            } catch (jsonError) {
+                console.warn(
+                    "Failed to parse verification result as JSON:",
+                    jsonError
+                );
+                console.log("Raw response:", responseText);
+                // Om JSON-tolkning misslyckas, utgå från att det är OK (fallback)
+                return {
+                    approved: true,
+                    reason: "Kunde inte tolka verifieringssvaret",
+                    score: 0,
+                };
+            }
+        } catch (error) {
+            console.error("Error in tip verification:", error);
+            // Vid fel, låt tipset gå igenom
+            return {
+                approved: true,
+                reason: "Ett fel uppstod vid verifiering",
+                score: 0,
+            };
+        }
+    }
+    /**
      * Huvud-metoden som orkestrerar alla agentens funktioner för att generera dagens tips
      */
     async generateDailyTip() {
         try {
-            // 1. Bestäm vilken kategori som passar bäst baserat på historik
-            const category = await this.recommendCategory();
-            console.log(`Agent recommends category: ${category}`);
+            // 1. Slumpmässigt val av kategori (frontend, backend, fullstack)
+            const categories = ["FRONTEND", "BACKEND", "FULLSTACK"];
+            const category =
+                categories[Math.floor(Math.random() * categories.length)];
+            console.log(`Random category selected: ${category}`);
 
             // 2. Bestäm lämplig svårighetsgrad
             const difficulty = await this.determineDifficulty(category);
@@ -464,18 +628,16 @@ export class ProgrammingTipsAgent {
                 // Default till frontend
                 tip = await this.generateFrontendTip(difficulty);
                 prefix = `💡 **Dagens ${difficulty} frontend-tips:**`;
-            }
-
-            // 4. Generera agentens förklaring av sitt tänkande
+            } // 4. Generera agentens förklaring av sitt tänkande
             const thinkingPrompt =
-                "Du är en AI-agent som ansvarar för att välja och generera programmeringstips. " +
-                `Du valde just kategorin ${category} med svårighetsgraden ${difficulty}. ` +
-                "Förklara ditt resonemang om: " +
-                "1. Varför du valde denna kategori? " +
-                "2. Varför är denna svårighetsgrad lämplig? " +
+                "Du är en AI-agent som ansvarar för att generera programmeringstips. " +
+                `En slumpmässigt vald kategori blev ${category} med svårighetsgraden ${difficulty}. ` +
+                "Förklara vad som är intressant med denna kategori och: " +
+                "1. Varför denna svårighetsgrad kan vara lämplig? " +
+                "2. Vilka typer av koncept som kan vara lärorika inom denna kategori? " +
                 "3. Vad är nästa steg för att förbättra framtida tips?";
 
-            const thinkingResult = await this.model.generateContent({
+            const thinkingResult = await this.generatorModel.generateContent({
                 contents: [{ role: "user", parts: [{ text: thinkingPrompt }] }],
             });
 
