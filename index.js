@@ -324,10 +324,8 @@ client.once("ready", () => {
                         ? agentResponse.tip.slice(0, MAX_LENGTH - 3) + "..."
                         : agentResponse.tip;
                 try {
-                    // Inkludera AI:ns resonemang för ökad transparens
-                    channel.send(
-                        `${agentResponse.prefix}\n${safeTip}\n\n_${agentResponse.reasoning}_\n\n_${agentResponse.thinking}_`
-                    );
+                    // Ta bort reasoning och thinking, visa bara tipsen
+                    channel.send(`${agentResponse.prefix}\n${safeTip}`);
                 } catch (err) {
                     console.error("Kunde inte skicka meddelande:", err);
                 }
@@ -381,9 +379,8 @@ client.on("messageCreate", async (message) => {
             agentResponse.tip.length > MAX_LENGTH
                 ? agentResponse.tip.slice(0, MAX_LENGTH - 3) + "..."
                 : agentResponse.tip;
-        message.channel.send(
-            `${agentResponse.prefix}\n${safeTip}\n\n_${agentResponse.reasoning}_\n\n_${agentResponse.thinking}_`
-        );
+        // Ta bort reasoning och thinking, visa bara tipsen
+        message.channel.send(`${agentResponse.prefix}\n${safeTip}`);
     }
 });
 
