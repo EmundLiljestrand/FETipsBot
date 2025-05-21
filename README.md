@@ -2,6 +2,7 @@
 
 En Discord-bot som genererar programmeringstips inom frontend, backend och fullstack med hjälp av Google Gemini och MongoDB.
 
+
 ## Kommandostruktur
 
 -   `!dagens-tips` - Visar ett frontend-tips
