@@ -1,3 +1,4 @@
+// Discord bot with Google's Gemini AI model for programming tips
 import dotenv from "dotenv";
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { Client, GatewayIntentBits } from "discord.js";
@@ -6,6 +7,7 @@ import cron from "node-cron";
 
 dotenv.config();
 
+// Create a single Discord client instance
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -219,7 +221,7 @@ async function getAIGeneratedFullstackTip() {
                     date: new Date(),
                     category: "fullstack",
                     difficulty: "medel",
-                    topics: ["integration", "skalbarhet", "prestanda"],
+                    topics: ["frontend", "backend", "API"],
                     feedback: [],
                 });
                 break;
@@ -247,7 +249,7 @@ async function getAIGeneratedFullstackTip() {
     }
 }
 
-// The AI agent that decides which type of tip to generate
+// AI agent that decides which tips to provide
 async function getAIAgentTip() {
     try {
         // Get the 5 most recent tips of each type
@@ -349,26 +351,16 @@ async function getAIAgentTip() {
             tip: await getAIGeneratedTip(),
             prefix: "💡 **Dagens frontend-tips:**",
             reasoning: "Fallback till frontend-tips på grund av ett fel.",
-            thinking:
-                "Ett fel uppstod vid beslut om vilken typ av tips som ska ges.",
+            thinking: "Ett fel uppstod i agentens beslutsprocess.",
         };
     }
 }
 
-// Handle process termination
-process.on("SIGINT", async () => {
-    try {
-        await mongo.close();
-        console.log("MongoDB connection closed");
-    } catch (error) {
-        console.error("Error closing MongoDB connection:", error);
-    } finally {
-        process.exit();
-    }
-});
-
-// Initialize MongoDB connection and set up the bot
+// Start the bot
 async function initialize() {
+    // Clear any existing listeners to prevent duplicates
+    client.removeAllListeners();
+    
     const connected = await connectToMongoDB();
     if (!connected) {
         console.error("Failed to connect to MongoDB. Exiting...");
@@ -398,9 +390,11 @@ async function initialize() {
                             `${agentResponse.prefix}\n${safeTip}`
                         );
                         console.log("Daily tip sent successfully");
+                    } else {
+                        console.error("Could not find a valid text channel");
                     }
-                } catch (err) {
-                    console.error("Could not send scheduled message:", err);
+                } catch (error) {
+                    console.error("Error sending scheduled tip:", error);
                 }
             },
             {
@@ -408,145 +402,96 @@ async function initialize() {
             }
         );
     });
-
+    
+    // Single event handler for all message commands
     client.on("messageCreate", async (message) => {
         // Ignore messages from bots
         if (message.author.bot) return;
 
         try {
-            // Enhanced command handling - avoid multiple processing
+            // Enhanced command handling with if/else to ensure only one command executes
             const command = message.content.trim();
-
-            // Using an approach that ensures only one path is executed
+            
+            // Process commands using if/else structure to guarantee only one executes
             if (command === "!dagens-tips") {
-                const processingMsg = await message.channel.send(
-                    "🔍 Genererar tips..."
-                );
+                const processingMsg = await message.channel.send("🔍 Genererar tips...");
                 const tip = await getAIGeneratedTip();
-                const safeTip =
-                    tip.length > MAX_LENGTH
-                        ? tip.slice(0, MAX_LENGTH - 3) + "..."
-                        : tip;
+                const safeTip = tip.length > MAX_LENGTH 
+                    ? tip.slice(0, MAX_LENGTH - 3) + "..." 
+                    : tip;
 
                 try {
                     await processingMsg.delete();
                 } catch (error) {
-                    console.log(
-                        "Could not delete processing message, continuing..."
-                    );
+                    console.log("Could not delete processing message, continuing...");
                 }
-
-                await message.channel.send(
-                    `💡 **Dagens frontend-tips:**\n${safeTip}`
-                );
-                return; // Exit after handling command
+                
+                await message.channel.send(`💡 **Dagens frontend-tips:**\n${safeTip}`);
             }
-
-            if (command === "!backend-tips") {
-                const processingMsg = await message.channel.send(
-                    "🔍 Genererar backend-tips..."
-                );
+            else if (command === "!backend-tips") {
+                const processingMsg = await message.channel.send("🔍 Genererar backend-tips...");
                 const tip = await getAIGeneratedBackendTip();
-                const safeTip =
-                    tip.length > MAX_LENGTH
-                        ? tip.slice(0, MAX_LENGTH - 3) + "..."
-                        : tip;
+                const safeTip = tip.length > MAX_LENGTH 
+                    ? tip.slice(0, MAX_LENGTH - 3) + "..." 
+                    : tip;
 
                 try {
                     await processingMsg.delete();
                 } catch (error) {
-                    console.log(
-                        "Could not delete processing message, continuing..."
-                    );
+                    console.log("Could not delete processing message, continuing...");
                 }
-
-                await message.channel.send(
-                    `🛠️ **Dagens backend-tips:**\n${safeTip}`
-                );
-                return; // Exit after handling command
+                
+                await message.channel.send(`🛠️ **Dagens backend-tips:**\n${safeTip}`);
             }
-
-            if (command === "!fullstack-tips") {
-                const processingMsg = await message.channel.send(
-                    "🔍 Genererar fullstack-tips..."
-                );
+            else if (command === "!fullstack-tips") {
+                const processingMsg = await message.channel.send("🔍 Genererar fullstack-tips...");
                 const tip = await getAIGeneratedFullstackTip();
-                const safeTip =
-                    tip.length > MAX_LENGTH
-                        ? tip.slice(0, MAX_LENGTH - 3) + "..."
-                        : tip;
+                const safeTip = tip.length > MAX_LENGTH 
+                    ? tip.slice(0, MAX_LENGTH - 3) + "..." 
+                    : tip;
 
                 try {
                     await processingMsg.delete();
                 } catch (error) {
-                    console.log(
-                        "Could not delete processing message, continuing..."
-                    );
+                    console.log("Could not delete processing message, continuing...");
                 }
-
-                await message.channel.send(
-                    `🌐 **Dagens fullstack-tips:**\n${safeTip}`
-                );
-                return; // Exit after handling command
+                
+                await message.channel.send(`🌐 **Dagens fullstack-tips:**\n${safeTip}`);
             }
-
-            if (command === "!ai-tips") {
-                const processingMsg = await message.channel.send(
-                    "🤖 AI-agenten tänker på vilken typ av tips som behövs..."
-                );
-
+            else if (command === "!ai-tips") {
+                const processingMsg = await message.channel.send("🤖 AI-agenten tänker på vilken typ av tips som behövs...");
                 const agentResponse = await getAIAgentTip();
-                const safeTip =
-                    agentResponse.tip.length > MAX_LENGTH
-                        ? agentResponse.tip.slice(0, MAX_LENGTH - 3) + "..."
-                        : agentResponse.tip;
+                const safeTip = agentResponse.tip.length > MAX_LENGTH 
+                    ? agentResponse.tip.slice(0, MAX_LENGTH - 3) + "..." 
+                    : agentResponse.tip;
 
                 try {
                     await processingMsg.delete();
                 } catch (error) {
-                    console.log(
-                        "Could not delete processing message, continuing..."
-                    );
+                    console.log("Could not delete processing message, continuing...");
                 }
-
+                
                 // Only show the tip, not the reasoning/thinking
-                await message.channel.send(
-                    `${agentResponse.prefix}\n${safeTip}`
-                );
-                return; // Exit after handling command
+                await message.channel.send(`${agentResponse.prefix}\n${safeTip}`);
             }
-
-            // Add a new command to show AI agent's reasoning (for admin/debug purposes)
-            if (command === "!ai-reasoning") {
-                const processingMsg = await message.channel.send(
-                    "🤖 AI-agenten analyserar tidigare tips och bestämmer nästa steg..."
-                );
-
+            else if (command === "!ai-reasoning") {
+                const processingMsg = await message.channel.send("🤖 AI-agenten analyserar tidigare tips och bestämmer nästa steg...");
                 const agentResponse = await getAIAgentTip();
-                const safeThinking =
-                    agentResponse.thinking.length > MAX_LENGTH
-                        ? agentResponse.thinking.slice(0, MAX_LENGTH - 3) +
-                          "..."
-                        : agentResponse.thinking;
+                const safeThinking = agentResponse.thinking.length > MAX_LENGTH 
+                    ? agentResponse.thinking.slice(0, MAX_LENGTH - 3) + "..." 
+                    : agentResponse.thinking;
 
                 try {
                     await processingMsg.delete();
                 } catch (error) {
-                    console.log(
-                        "Could not delete processing message, continuing..."
-                    );
+                    console.log("Could not delete processing message, continuing...");
                 }
-
-                await message.channel.send(
-                    `**AI-agentens resonemang:**\n${safeThinking}`
-                );
-                return; // Exit after handling command
+                
+                await message.channel.send(`**AI-agentens resonemang:**\n${safeThinking}`);
             }
         } catch (error) {
             console.error("Error handling message:", error);
-            message.channel.send(
-                "Ett fel uppstod när kommandot skulle bearbetas."
-            );
+            message.channel.send("Ett fel uppstod när kommandot skulle bearbetas.");
         }
     });
 
