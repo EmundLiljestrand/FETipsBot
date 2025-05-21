@@ -25,15 +25,19 @@ export class DiscordService {
         // Interna tillstånd
         this.isReady = false;
         this.scheduledJob = null;
+        this._eventHandlersSetup = false;
     }
-
     /**
      * Initialiserar Discord-klienten och sätter upp event handlers
      */
     async initialize() {
         try {
-            // Sätt upp event handlers
-            this.setupEventHandlers();
+            // Kontrollera om event handlers redan är uppsatta
+            if (!this._eventHandlersSetup) {
+                // Sätt upp event handlers
+                this.setupEventHandlers();
+                this._eventHandlersSetup = true;
+            }
 
             // Logga in till Discord
             await this.client.login(this.token);
@@ -55,9 +59,7 @@ export class DiscordService {
 
             // Sätt upp schemalagd uppgift
             this.scheduleDaily();
-        });
-
-        // När ett meddelande tas emot - använd .once() för att undvika dubbla anrop
+        }); // När ett meddelande tas emot
         this.client.on("messageCreate", async (message) => {
             // Ignorera meddelanden från andra bottar
             if (message.author.bot) return;
@@ -68,21 +70,30 @@ export class DiscordService {
                     `Command received: ${message.content} from ${message.author.tag}`
                 );
 
-                // Hantera olika kommandon - se till att exakt matchning görs
+                // Hantera olika kommandon - använd exakt matchning för att undvika dubbla anrop
                 const command = message.content.trim();
 
-                if (command === "!dagens-tips") {
-                    await this.handleDailyTipCommand(message);
-                } else if (command === "!frontend-tips") {
-                    await this.handleFrontendTipCommand(message);
-                } else if (command === "!backend-tips") {
-                    await this.handleBackendTipCommand(message);
-                } else if (command === "!fullstack-tips") {
-                    await this.handleFullstackTipCommand(message);
-                } else if (command === "!ai-tips") {
-                    await this.handleAITipCommand(message);
-                } else if (command === "!ai-reasoning") {
-                    await this.handleAIReasoningCommand(message);
+                // Använd en switch-sats för att hantera commands och säkerställ att endast ett command körs
+                switch (command) {
+                    case "!dagens-tips":
+                        await this.handleDailyTipCommand(message);
+                        break;
+                    case "!frontend-tips":
+                        await this.handleFrontendTipCommand(message);
+                        break;
+                    case "!backend-tips":
+                        await this.handleBackendTipCommand(message);
+                        break;
+                    case "!fullstack-tips":
+                        await this.handleFullstackTipCommand(message);
+                        break;
+                    case "!ai-tips":
+                        await this.handleAITipCommand(message);
+                        break;
+                    case "!ai-reasoning":
+                        await this.handleAIReasoningCommand(message);
+                        break;
+                    // Inget default-fall för att undvika att hantera irrelevanta kommandon
                 }
             } catch (error) {
                 console.error("Error handling message:", error);
@@ -175,25 +186,30 @@ export class DiscordService {
      * Hanterar kommandot !ai-tips (agent väljer kategori)
      */
     async handleAITipCommand(message) {
-        // Första meddelandet som visar att boten arbetar
+        // Visa att boten arbetar
         const processingMsg = await message.channel.send(
             "🤖 AI-agenten tänker på vilken typ av tips som behövs..."
         );
 
         try {
-            // Generera tipset
-            const agentResponse = await this.tipAgent.generateDailyTip();
+            console.log("Generating AI tip for command !ai-tips");
 
-            // Radera "tänker"-meddelandet först innan vi skickar det nya meddelandet
+            // Generera tipset (endast ett anrop)
+            const agentResponse = await this.tipAgent.generateDailyTip();
+            console.log(
+                `AI tip generated with category: ${agentResponse.category}`
+            );
+
+            // Försök radera "tänker"-meddelandet
             try {
                 await processingMsg.delete();
-            } catch (error) {
+            } catch (deleteError) {
                 console.log(
                     "Could not delete processing message, continuing..."
                 );
             }
 
-            // Skicka resultatet efter att vi har raderat "tänker"-meddelandet
+            // Skicka det faktiska tipset
             await message.channel.send(
                 `${agentResponse.prefix}\n${this.formatTip(agentResponse.tip)}`
             );
@@ -294,15 +310,20 @@ export class DiscordService {
             `Scheduled daily tip at "${this.scheduleTime}" (${this.timezone})`
         );
     }
-
     /**
      * Skickar ett dagligt tips
      */
     async sendDailyTip() {
         try {
+            console.log("Attempting to send scheduled daily tip...");
             const channel = await this.client.channels.fetch(this.channelId);
+
             if (channel && channel.isTextBased()) {
+                console.log("Channel found, generating daily tip...");
                 const agentResponse = await this.tipAgent.generateDailyTip();
+                console.log(
+                    `Generated daily tip of category: ${agentResponse.category}`
+                );
 
                 // Skicka tipset utan resonemang/tänkande
                 await channel.send(
