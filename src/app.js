@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { ProgrammingTipsAgent } from "./agent/agent.js";
 import { DatabaseService } from "./services/database-service.js";
-import { DiscordService } from "./services/discord-service.js"; // Back to original file
+import { DiscordService } from "./services/discord-service.js";
 import { config } from "./config.js";
 
 /**

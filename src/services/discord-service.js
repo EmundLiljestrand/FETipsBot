@@ -26,6 +26,7 @@ export class DiscordService {
         this.isReady = false;
         this.scheduledJob = null;
     }
+
     /**
      * Initialiserar Discord-klienten och sätter upp event handlers
      */
@@ -121,6 +122,7 @@ export class DiscordService {
             }
         });
     }
+
     /**
      * Hanterar kommandot !dagens-tips (frontend-tips)
      */
@@ -200,17 +202,27 @@ export class DiscordService {
             `🌐 **Dagens fullstack-tips:**\n${this.formatTip(tip)}`
         );
     }
+
     /**
      * Hanterar kommandot !ai-tips (agent väljer kategori)
      */
     async handleAITipCommand(message) {
-        // Visa att boten arbetar
-        const processingMsg = await message.channel.send(
-            "🤖 AI-agenten tänker på vilken typ av tips som behövs..."
-        );
+        console.log("handleAITipCommand called - preparing response");
+
+        // Visa att boten arbetar - spara referensen till meddelandet
+        let processingMsg;
+        try {
+            processingMsg = await message.channel.send(
+                "🤖 AI-agenten tänker på vilken typ av tips som behövs..."
+            );
+            console.log("Sent processing message with ID:", processingMsg.id);
+        } catch (msgError) {
+            console.error("Error sending processing message:", msgError);
+            // Fortsätt även om vi inte kan skicka processingMsg
+        }
 
         try {
-            console.log("Generating AI tip for command !ai-tips");
+            console.log("Starting to generate AI tip");
 
             // Generera tipset (endast ett anrop)
             const agentResponse = await this.tipAgent.generateDailyTip();
@@ -218,70 +230,117 @@ export class DiscordService {
                 `AI tip generated with category: ${agentResponse.category}`
             );
 
-            // Försök radera "tänker"-meddelandet
-            try {
-                await processingMsg.delete();
-            } catch (deleteError) {
-                console.log(
-                    "Could not delete processing message, continuing..."
-                );
+            // Försök radera "tänker"-meddelandet om det finns
+            if (processingMsg) {
+                try {
+                    await processingMsg.delete();
+                    console.log("Successfully deleted processing message");
+                } catch (deleteError) {
+                    console.log(
+                        "Could not delete processing message:",
+                        deleteError.message
+                    );
+                }
             }
 
             // Skicka det faktiska tipset
+            console.log("Sending final tip message");
             await message.channel.send(
                 `${agentResponse.prefix}\n${this.formatTip(agentResponse.tip)}`
             );
+            console.log("Final tip message sent");
         } catch (error) {
             console.error("Error handling AI tip command:", error);
 
-            // Försök radera processingMsg om ett fel uppstår
-            try {
-                await processingMsg.delete();
-            } catch (deleteError) {
-                console.log("Could not delete processing message after error");
+            // Försök radera processingMsg om ett fel uppstår och meddelandet finns
+            if (processingMsg) {
+                try {
+                    await processingMsg.delete();
+                    console.log("Deleted processing message after error");
+                } catch (deleteError) {
+                    console.log(
+                        "Could not delete processing message after error:",
+                        deleteError.message
+                    );
+                }
             }
 
+            // Skicka felmeddelande
             await message.channel.send(
                 "Ett fel uppstod när AI-tipset skulle genereras."
             );
         }
     }
+
     /**
      * Hanterar kommandot !ai-reasoning (visa agentens resonemang)
      */
     async handleAIReasoningCommand(message) {
-        // Först skicka ett meddelande som visar att boten arbetar
-        const processingMsg = await message.channel.send(
-            "🤖 AI-agenten analyserar tidigare tips och bestämmer nästa steg..."
-        );
+        console.log("handleAIReasoningCommand called - preparing response");
+
+        // Visa att boten arbetar
+        let processingMsg;
+        try {
+            processingMsg = await message.channel.send(
+                "🤖 AI-agenten analyserar tidigare tips och bestämmer nästa steg..."
+            );
+            console.log(
+                "Sent reasoning processing message with ID:",
+                processingMsg.id
+            );
+        } catch (msgError) {
+            console.error(
+                "Error sending reasoning processing message:",
+                msgError
+            );
+        }
 
         try {
+            console.log("Getting agent reasoning");
+
             // Använd samma response som för !ai-tips för att undvika dubbla API-anrop
             const agentResponse = await this.tipAgent.getAgentReasoning();
+            console.log("Agent reasoning generated");
 
-            // Radera "analyserar"-meddelandet först innan vi skickar det nya meddelandet
-            try {
-                await processingMsg.delete();
-            } catch (error) {
-                console.log(
-                    "Could not delete processing message, continuing..."
-                );
+            // Radera "analyserar"-meddelandet först om det finns
+            if (processingMsg) {
+                try {
+                    await processingMsg.delete();
+                    console.log(
+                        "Successfully deleted reasoning processing message"
+                    );
+                } catch (deleteError) {
+                    console.log(
+                        "Could not delete reasoning processing message:",
+                        deleteError.message
+                    );
+                }
             }
 
-            // Skicka resultatet efter att vi har raderat "analyserar"-meddelandet
+            // Skicka resultatet
+            console.log("Sending reasoning message");
             await message.channel.send(
                 `**AI-agentens resonemang:**\n${this.formatTip(
                     agentResponse.thinking
                 )}`
             );
+            console.log("Reasoning message sent");
         } catch (error) {
             console.error("Error handling AI reasoning command:", error);
 
-            // Försök radera processingMsg om ett fel uppstår
-            try {
-                await processingMsg.delete();
-            } catch (deleteError) {
-                console.log("Could not delete processing message after error");
+            // Försök radera processingMsg om ett fel uppstår och det finns
+            if (processingMsg) {
+                try {
+                    await processingMsg.delete();
+                    console.log(
+                        "Deleted reasoning processing message after error"
+                    );
+                } catch (deleteError) {
+                    console.log(
+                        "Could not delete reasoning processing message after error:",
+                        deleteError.message
+                    );
+                }
             }
 
             await message.channel.send(
@@ -328,6 +387,7 @@ export class DiscordService {
             `Scheduled daily tip at "${this.scheduleTime}" (${this.timezone})`
         );
     }
+
     /**
      * Skickar ett dagligt tips
      */
