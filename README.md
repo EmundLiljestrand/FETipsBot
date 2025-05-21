@@ -76,7 +76,3 @@ För att utveckla nya funktioner:
 2. Implementera funktionerna i `agent/agent.js`
 3. Lägg till nya prompts i `utils/prompt-utils.js`
 4. Uppdatera konfigurationen i `config.js`
-
-## Författare
-
-Emund Liljestrand

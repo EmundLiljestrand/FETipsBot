@@ -85,13 +85,21 @@ export class DiscordService {
             }
         });
     }
-
     /**
      * Hanterar kommandot !dagens-tips (frontend-tips)
      */
     async handleDailyTipCommand(message) {
-        await message.channel.send("🔍 Genererar frontend-tips...");
+        const processingMsg = await message.channel.send(
+            "🔍 Genererar frontend-tips..."
+        );
         const tip = await this.tipAgent.generateFrontendTip();
+
+        try {
+            await processingMsg.delete();
+        } catch (error) {
+            console.log("Could not delete processing message, continuing...");
+        }
+
         await message.channel.send(
             `💡 **Dagens frontend-tips:**\n${this.formatTip(tip)}`
         );
@@ -101,8 +109,17 @@ export class DiscordService {
      * Hanterar kommandot !frontend-tips
      */
     async handleFrontendTipCommand(message) {
-        await message.channel.send("🔍 Genererar frontend-tips...");
+        const processingMsg = await message.channel.send(
+            "🔍 Genererar frontend-tips..."
+        );
         const tip = await this.tipAgent.generateFrontendTip();
+
+        try {
+            await processingMsg.delete();
+        } catch (error) {
+            console.log("Could not delete processing message, continuing...");
+        }
+
         await message.channel.send(
             `💡 **Dagens frontend-tips:**\n${this.formatTip(tip)}`
         );
@@ -112,8 +129,17 @@ export class DiscordService {
      * Hanterar kommandot !backend-tips
      */
     async handleBackendTipCommand(message) {
-        await message.channel.send("🔍 Genererar backend-tips...");
+        const processingMsg = await message.channel.send(
+            "🔍 Genererar backend-tips..."
+        );
         const tip = await this.tipAgent.generateBackendTip();
+
+        try {
+            await processingMsg.delete();
+        } catch (error) {
+            console.log("Could not delete processing message, continuing...");
+        }
+
         await message.channel.send(
             `🛠️ **Dagens backend-tips:**\n${this.formatTip(tip)}`
         );
@@ -123,26 +149,44 @@ export class DiscordService {
      * Hanterar kommandot !fullstack-tips
      */
     async handleFullstackTipCommand(message) {
-        await message.channel.send("🔍 Genererar fullstack-tips...");
+        const processingMsg = await message.channel.send(
+            "🔍 Genererar fullstack-tips..."
+        );
         const tip = await this.tipAgent.generateFullstackTip();
+
+        try {
+            await processingMsg.delete();
+        } catch (error) {
+            console.log("Could not delete processing message, continuing...");
+        }
+
         await message.channel.send(
             `🌐 **Dagens fullstack-tips:**\n${this.formatTip(tip)}`
         );
     }
-
     /**
      * Hanterar kommandot !ai-tips (agent väljer kategori)
      */
     async handleAITipCommand(message) {
-        await message.channel.send(
+        // Första meddelandet som visar att boten arbetar
+        const processingMsg = await message.channel.send(
             "🤖 AI-agenten tänker på vilken typ av tips som behövs..."
         );
+
+        // Generera tipset
         const agentResponse = await this.tipAgent.generateDailyTip();
+
+        // Skicka resultatet (och även radera "tänker"-meddelandet om möjligt för att minska brus)
+        try {
+            await processingMsg.delete();
+        } catch (error) {
+            console.log("Could not delete processing message, continuing...");
+        }
+
         await message.channel.send(
             `${agentResponse.prefix}\n${this.formatTip(agentResponse.tip)}`
         );
     }
-
     /**
      * Hanterar kommandot !ai-reasoning (visa agentens resonemang)
      */
@@ -150,7 +194,8 @@ export class DiscordService {
         await message.channel.send(
             "🤖 AI-agenten analyserar tidigare tips och bestämmer nästa steg..."
         );
-        const agentResponse = await this.tipAgent.generateDailyTip();
+        // Använd samma response som för !ai-tips för att undvika dubbla API-anrop
+        const agentResponse = await this.tipAgent.getAgentReasoning();
         await message.channel.send(
             `**AI-agentens resonemang:**\n${this.formatTip(
                 agentResponse.thinking

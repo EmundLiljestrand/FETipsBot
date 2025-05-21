@@ -439,6 +439,105 @@ export class ProgrammingTipsAgent {
     }
 
     /**
+     * Genererar endast ett resonemang baserat på tidigare tips utan att skapa nya tips
+     */
+    async getAgentReasoning() {
+        try {
+            // Hämta de senaste tips av varje kategori
+            const frontendTips = this.memory.recentTips
+                .filter((t) => t.category === "frontend")
+                .slice(0, 3);
+            const backendTips = this.memory.recentTips
+                .filter((t) => t.category === "backend")
+                .slice(0, 3);
+            const fullstackTips = this.memory.recentTips
+                .filter((t) => t.category === "fullstack")
+                .slice(0, 3);
+
+            // Utför en quick-analys av vilken kategori som är mest lämplig just nu
+            // utan att faktiskt generera tips
+            const prompt =
+                "Du är en AI-agent som analyserar tipshistorik. " +
+                "Baserat på de senaste tipsen nedan, vilken kategori (FRONTEND, BACKEND, FULLSTACK) " +
+                "bör fokuseras på härnäst för bästa variation, och med vilken svårighetsgrad (nybörjare, medel, avancerad)? " +
+                "Förklara ditt resonemang om: \n" +
+                "1. Vilken kategori bör få mer fokus baserat på historiken? \n" +
+                "2. Vilken svårighetsgrad är lämplig? \n" +
+                "3. Hur kan framtida tips förbättras? \n\n" +
+                "Senaste frontend tips: " +
+                (frontendTips.length
+                    ? frontendTips
+                          .map((t) => t.text.substring(0, 100))
+                          .join("\n")
+                    : "Inga") +
+                "\n\n" +
+                "Senaste backend tips: " +
+                (backendTips.length
+                    ? backendTips
+                          .map((t) => t.text.substring(0, 100))
+                          .join("\n")
+                    : "Inga") +
+                "\n\n" +
+                "Senaste fullstack tips: " +
+                (fullstackTips.length
+                    ? fullstackTips
+                          .map((t) => t.text.substring(0, 100))
+                          .join("\n")
+                    : "Inga");
+
+            const result = await this.model.generateContent({
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+            });
+
+            const thinking = result.response.text().trim();
+
+            // Extrahera kategorirekommendation från svaret
+            let category = "FRONTEND"; // default
+            if (thinking.toUpperCase().includes("BACKEND")) {
+                category = "BACKEND";
+            } else if (thinking.toUpperCase().includes("FULLSTACK")) {
+                category = "FULLSTACK";
+            }
+
+            // Extrahera svårighetsgrad från svaret
+            let difficulty = "medel"; // default
+            if (thinking.toLowerCase().includes("nybörjare")) {
+                difficulty = "nybörjare";
+            } else if (thinking.toLowerCase().includes("avancerad")) {
+                difficulty = "avancerad";
+            }
+
+            // Bestäm prefix baserat på kategori
+            let prefix;
+            if (category === "BACKEND") {
+                prefix = `🛠️ **Dagens ${difficulty} backend-tips:**`;
+            } else if (category === "FULLSTACK") {
+                prefix = "🌐 **Dagens fullstack-tips:**";
+            } else {
+                prefix = `💡 **Dagens ${difficulty} frontend-tips:**`;
+            }
+
+            // Returnera bara metadata utan att generera ett nytt tips
+            return {
+                tip: "", // Inget tips, bara reasoning
+                prefix: prefix,
+                category: category.toLowerCase(),
+                difficulty: difficulty,
+                thinking: thinking,
+            };
+        } catch (error) {
+            console.error("Error getting agent reasoning:", error);
+            return {
+                tip: "",
+                prefix: "💡 **Dagens frontend-tips:**",
+                category: "frontend",
+                difficulty: "medel",
+                thinking: "Ett fel uppstod vid analys av tidigare tips.",
+            };
+        }
+    }
+
+    /**
      * Huvud-metoden som orkestrerar alla agentens funktioner för att generera dagens tips
      */
     async generateDailyTip() {
