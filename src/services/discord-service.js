@@ -72,8 +72,8 @@ export class DiscordService {
                     await this.handleBackendTipCommand(message);
                 } else if (message.content === "!fullstack-tips") {
                     await this.handleFullstackTipCommand(message);
-                } else if (message.content === "!ai-tips") {
-                    await this.handleAITipCommand(message);
+                } else if (message.content === "!random-tips") {
+                    await this.handleRandomTipCommand(message);
                 } else if (message.content === "!ai-reasoning") {
                     await this.handleAIReasoningCommand(message);
                 }
@@ -129,26 +129,24 @@ export class DiscordService {
             `🌐 **Dagens fullstack-tips:**\n${this.formatTip(tip)}`
         );
     }
-
     /**
-     * Hanterar kommandot !ai-tips (agent väljer kategori)
+     * Hanterar kommandot !random-tips (slumpmässigt val av kategori)
      */
-    async handleAITipCommand(message) {
+    async handleRandomTipCommand(message) {
         await message.channel.send(
-            "🤖 AI-agenten tänker på vilken typ av tips som behövs..."
+            "🎲 Slumpar fram vilken typ av tips som ska genereras..."
         );
         const agentResponse = await this.tipAgent.generateDailyTip();
         await message.channel.send(
             `${agentResponse.prefix}\n${this.formatTip(agentResponse.tip)}`
         );
     }
-
     /**
-     * Hanterar kommandot !ai-reasoning (visa agentens resonemang)
+     * Hanterar kommandot !ai-reasoning (visa resonemang om slumpmässigt vald kategori)
      */
     async handleAIReasoningCommand(message) {
         await message.channel.send(
-            "🤖 AI-agenten analyserar tidigare tips och bestämmer nästa steg..."
+            "🤖 AI-agenten reflekterar över slumpmässigt vald kategori..."
         );
         const agentResponse = await this.tipAgent.generateDailyTip();
         await message.channel.send(

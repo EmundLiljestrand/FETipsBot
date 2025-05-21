@@ -1,6 +1,6 @@
 import dotenv from "dotenv";
-import { Application } from "./app.js";
-import { config } from "./config.js";
+import { Application } from "./src/app.js";
+import { config } from "./src/config.js";
 
 // Ladda miljövariabler
 dotenv.config();
