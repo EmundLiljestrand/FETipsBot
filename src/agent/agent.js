@@ -436,13 +436,16 @@ export class ProgrammingTipsAgent {
             console.error("Error during self-reflection:", error);
             return "Kunde inte genomföra reflektion.";
         }
-    }
-
-    /**
-     * Genererar endast ett resonemang baserat på tidigare tips utan att skapa nya tips
+    }    /**
+     * Genererar endast ett resonemang baserat på tidigare tips utan att skapa nya tips.
+     * Viktigt: Denna funktion är separerad från generateDailyTip för att undvika
+     * dubbla meddelanden i Discord.
      */
     async getAgentReasoning() {
         try {
+            // Logga anrop för felsökning
+            console.log("getAgentReasoning called, analyzing tip history...");
+            
             // Hämta de senaste tips av varje kategori
             const frontendTips = this.memory.recentTips
                 .filter((t) => t.category === "frontend")
@@ -490,6 +493,7 @@ export class ProgrammingTipsAgent {
             });
 
             const thinking = result.response.text().trim();
+            console.log("Agent reasoning generated successfully");
 
             // Extrahera kategorirekommendation från svaret
             let category = "FRONTEND"; // default
@@ -507,17 +511,18 @@ export class ProgrammingTipsAgent {
                 difficulty = "avancerad";
             }
 
-            // Bestäm prefix baserat på kategori
+            // Bestäm prefix baserat på kategori - OBS: Vi visar inte detta prefix i UI:t, 
+            // bara för konsistens med andra returvärden
             let prefix;
             if (category === "BACKEND") {
-                prefix = `🛠️ **Dagens ${difficulty} backend-tips:**`;
+                prefix = `🛠️ **Analys av backend-tips:**`;
             } else if (category === "FULLSTACK") {
-                prefix = "🌐 **Dagens fullstack-tips:**";
+                prefix = "🌐 **Analys av fullstack-tips:**";
             } else {
-                prefix = `💡 **Dagens ${difficulty} frontend-tips:**`;
+                prefix = `💡 **Analys av frontend-tips:**`;
             }
 
-            // Returnera bara metadata utan att generera ett nytt tips
+            // Returnera bara metadata och tänkandet utan att generera ett nytt tips
             return {
                 tip: "", // Inget tips, bara reasoning
                 prefix: prefix,
@@ -529,7 +534,7 @@ export class ProgrammingTipsAgent {
             console.error("Error getting agent reasoning:", error);
             return {
                 tip: "",
-                prefix: "💡 **Dagens frontend-tips:**",
+                prefix: "💡 **Analys av tips-historik:**",
                 category: "frontend",
                 difficulty: "medel",
                 thinking: "Ett fel uppstod vid analys av tidigare tips.",
