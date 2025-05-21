@@ -43,7 +43,8 @@ export class DiscordService {
             console.error("Failed to initialize Discord service:", error);
             throw error;
         }
-    }    /**
+    }
+    /**
      * Sätter upp event handlers för Discord-klienten
      */
     setupEventHandlers() {
@@ -63,11 +64,13 @@ export class DiscordService {
 
             try {
                 // Logga mottaget kommando för felsökning
-                console.log(`Command received: ${message.content} from ${message.author.tag}`);
-                
+                console.log(
+                    `Command received: ${message.content} from ${message.author.tag}`
+                );
+
                 // Hantera olika kommandon - se till att exakt matchning görs
                 const command = message.content.trim();
-                
+
                 if (command === "!dagens-tips") {
                     await this.handleDailyTipCommand(message);
                 } else if (command === "!frontend-tips") {
@@ -167,7 +170,8 @@ export class DiscordService {
         await message.channel.send(
             `🌐 **Dagens fullstack-tips:**\n${this.formatTip(tip)}`
         );
-    }    /**
+    }
+    /**
      * Hanterar kommandot !ai-tips (agent väljer kategori)
      */
     async handleAITipCommand(message) {
@@ -184,7 +188,9 @@ export class DiscordService {
             try {
                 await processingMsg.delete();
             } catch (error) {
-                console.log("Could not delete processing message, continuing...");
+                console.log(
+                    "Could not delete processing message, continuing..."
+                );
             }
 
             // Skicka resultatet efter att vi har raderat "tänker"-meddelandet
@@ -193,17 +199,20 @@ export class DiscordService {
             );
         } catch (error) {
             console.error("Error handling AI tip command:", error);
-            
+
             // Försök radera processingMsg om ett fel uppstår
             try {
                 await processingMsg.delete();
             } catch (deleteError) {
                 console.log("Could not delete processing message after error");
             }
-            
-            await message.channel.send("Ett fel uppstod när AI-tipset skulle genereras.");
+
+            await message.channel.send(
+                "Ett fel uppstod när AI-tipset skulle genereras."
+            );
         }
-    }    /**
+    }
+    /**
      * Hanterar kommandot !ai-reasoning (visa agentens resonemang)
      */
     async handleAIReasoningCommand(message) {
@@ -211,18 +220,20 @@ export class DiscordService {
         const processingMsg = await message.channel.send(
             "🤖 AI-agenten analyserar tidigare tips och bestämmer nästa steg..."
         );
-        
+
         try {
             // Använd samma response som för !ai-tips för att undvika dubbla API-anrop
             const agentResponse = await this.tipAgent.getAgentReasoning();
-            
+
             // Radera "analyserar"-meddelandet först innan vi skickar det nya meddelandet
             try {
                 await processingMsg.delete();
             } catch (error) {
-                console.log("Could not delete processing message, continuing...");
+                console.log(
+                    "Could not delete processing message, continuing..."
+                );
             }
-            
+
             // Skicka resultatet efter att vi har raderat "analyserar"-meddelandet
             await message.channel.send(
                 `**AI-agentens resonemang:**\n${this.formatTip(
@@ -231,15 +242,17 @@ export class DiscordService {
             );
         } catch (error) {
             console.error("Error handling AI reasoning command:", error);
-            
+
             // Försök radera processingMsg om ett fel uppstår
             try {
                 await processingMsg.delete();
             } catch (deleteError) {
                 console.log("Could not delete processing message after error");
             }
-            
-            await message.channel.send("Ett fel uppstod när AI-reasoning skulle genereras.");
+
+            await message.channel.send(
+                "Ett fel uppstod när AI-reasoning skulle genereras."
+            );
         }
     }
 

@@ -436,7 +436,8 @@ export class ProgrammingTipsAgent {
             console.error("Error during self-reflection:", error);
             return "Kunde inte genomföra reflektion.";
         }
-    }    /**
+    }
+    /**
      * Genererar endast ett resonemang baserat på tidigare tips utan att skapa nya tips.
      * Viktigt: Denna funktion är separerad från generateDailyTip för att undvika
      * dubbla meddelanden i Discord.
@@ -445,7 +446,7 @@ export class ProgrammingTipsAgent {
         try {
             // Logga anrop för felsökning
             console.log("getAgentReasoning called, analyzing tip history...");
-            
+
             // Hämta de senaste tips av varje kategori
             const frontendTips = this.memory.recentTips
                 .filter((t) => t.category === "frontend")
@@ -511,7 +512,7 @@ export class ProgrammingTipsAgent {
                 difficulty = "avancerad";
             }
 
-            // Bestäm prefix baserat på kategori - OBS: Vi visar inte detta prefix i UI:t, 
+            // Bestäm prefix baserat på kategori - OBS: Vi visar inte detta prefix i UI:t,
             // bara för konsistens med andra returvärden
             let prefix;
             if (category === "BACKEND") {
