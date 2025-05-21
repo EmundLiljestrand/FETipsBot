@@ -51,18 +51,43 @@ async function getAIGeneratedTip() {
         const normalizedTip = tip.trim().toLowerCase();
         const exists = await tipsCol.findOne({ text: normalizedTip });
         if (!exists && tip) {
-            await tipsCol.insertOne({ text: normalizedTip, date: new Date() });
+            await tipsCol.insertOne({
+                text: normalizedTip,
+                date: new Date(),
+                category: "frontend",
+                difficulty: "avancerad",
+                topics: ["CSS", "JavaScript", "React"], // Extrahera från tipset med AI
+                feedback: [], // Plats för framtida användares feedback
+            });
             break;
         }
     } while (tries < 5);
 
+    // Efter att tipset har skickats:
+    const reflectionPrompt =
+        `Analysera detta tips som just skickades: "${tip}". ` +
+        "Vad var bra med det? Vad kan förbättras nästa gång? " +
+        "Vilka ämnen bör täckas nästa gång?";
+
+    const reflectionResult = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: reflectionPrompt }] }],
+    });
+    const reflection = reflectionResult.response.text();
+
+    // Spara reflektionen för framtida användning
+    await db.collection("agent_reflections").insertOne({
+        tip: normalizedTip,
+        reflection: reflection,
+        date: new Date(),
+    });
+
     return tip || "Tipset kunde inte hämtas just nu.";
 }
 
-async function getAIGeneratedBackendTip() {
+async function getAIGeneratedBackendTip(difficulty = "medel") {
     const randomSeed = Math.floor(Math.random() * 100000);
     const prompt =
-        "Ge exakt 3 användbara och pedagogiska tips inom backendutveckling som passar nybörjare eller studenter år 2025. " +
+        `Ge exakt 3 ${difficulty} och pedagogiska tips inom backendutveckling som passar nybörjare eller studenter år 2025. ` +
         "Varje tips ska vara max 2 meningar långt. " +
         "Avsluta med att kort förklara 1 grundläggande koncept inom backendutveckling på max 3 meningar. " +
         "Svara utan hälsningsfras och håll hela svaret kortfattat. Max 12 meningar totalt. Slumpnummer: " +
@@ -86,10 +111,35 @@ async function getAIGeneratedBackendTip() {
         const normalizedTip = tip.trim().toLowerCase();
         const exists = await tipsCol.findOne({ text: normalizedTip });
         if (!exists && tip) {
-            await tipsCol.insertOne({ text: normalizedTip, date: new Date() });
+            await tipsCol.insertOne({
+                text: normalizedTip,
+                date: new Date(),
+                category: "backend",
+                difficulty: difficulty,
+                topics: ["databaser", "API", "säkerhet"], // Extrahera från tipset med AI
+                feedback: [], // Plats för framtida användares feedback
+            });
             break;
         }
     } while (tries < 5);
+
+    // Efter att tipset har skickats:
+    const reflectionPrompt =
+        `Analysera detta tips som just skickades: "${tip}". ` +
+        "Vad var bra med det? Vad kan förbättras nästa gång? " +
+        "Vilka ämnen bör täckas nästa gång?";
+
+    const reflectionResult = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: reflectionPrompt }] }],
+    });
+    const reflection = reflectionResult.response.text();
+
+    // Spara reflektionen för framtida användning
+    await db.collection("agent_reflections").insertOne({
+        tip: normalizedTip,
+        reflection: reflection,
+        date: new Date(),
+    });
 
     return tip || "Tipset kunde inte hämtas just nu.";
 }
@@ -121,10 +171,35 @@ async function getAIGeneratedFullstackTip() {
         const normalizedTip = tip.trim().toLowerCase();
         const exists = await tipsCol.findOne({ text: normalizedTip });
         if (!exists && tip) {
-            await tipsCol.insertOne({ text: normalizedTip, date: new Date() });
+            await tipsCol.insertOne({
+                text: normalizedTip,
+                date: new Date(),
+                category: "fullstack",
+                difficulty: "medel",
+                topics: ["integration", "skalbarhet", "prestanda"], // Extrahera från tipset med AI
+                feedback: [], // Plats för framtida användares feedback
+            });
             break;
         }
     } while (tries < 5);
+
+    // Efter att tipset har skickats:
+    const reflectionPrompt =
+        `Analysera detta tips som just skickades: "${tip}". ` +
+        "Vad var bra med det? Vad kan förbättras nästa gång? " +
+        "Vilka ämnen bör täckas nästa gång?";
+
+    const reflectionResult = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: reflectionPrompt }] }],
+    });
+    const reflection = reflectionResult.response.text();
+
+    // Spara reflektionen för framtida användning
+    await db.collection("agent_reflections").insertOne({
+        tip: normalizedTip,
+        reflection: reflection,
+        date: new Date(),
+    });
 
     return tip || "Tipset kunde inte hämtas just nu.";
 }
@@ -172,13 +247,34 @@ async function getAIAgentTip() {
     });
     const category = result.response.text().trim().toUpperCase();
 
-    // Välj rätt tipsfunktion baserat på AI:ns val
+    const thinkingPrompt =
+        "Du är en AI-agent som ansvarar för att välja och generera programmeringstips. " +
+        "Analysera följande tips från de senaste dagarna och resonera om: " +
+        "1. Vilken kategori behöver mer uppmärksamhet? " +
+        "2. Vilka ämnen har täckts nyligen och bör undvikas? " +
+        "3. Vilken svårighetsgrad bör dagens tips ha? " +
+        "Svara endast med ditt resonemang.";
+
+    const thinkingResult = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: thinkingPrompt }] }],
+    });
+    const agentThinking = thinkingResult.response.text().trim();
+
+    // Låt agenten också bestämma svårighetsnivån:
+    let difficulty = "medel"; // Default
+    if (agentThinking.toLowerCase().includes("nybörjare")) {
+        difficulty = "nybörjare";
+    } else if (agentThinking.toLowerCase().includes("avancerad")) {
+        difficulty = "avancerad";
+    }
+
+    // Välj rätt tipsfunktion baserat på både kategori och svårighet
     if (category === "BACKEND") {
         return {
-            tip: await getAIGeneratedBackendTip(),
-            prefix: "🛠️ **Dagens backend-tips:**",
-            reasoning:
-                "Jag valde backend-tips idag eftersom de senaste tipsen fokuserat mer på frontend.",
+            tip: await getAIGeneratedBackendTip(difficulty),
+            prefix: `🛠️ **Dagens ${difficulty} backend-tips:**`,
+            reasoning: agentThinking,
+            thinking: agentThinking,
         };
     } else if (category === "FULLSTACK") {
         return {
@@ -186,6 +282,7 @@ async function getAIAgentTip() {
             prefix: "🌐 **Dagens fullstack-tips:**",
             reasoning:
                 "Jag valde fullstack-tips idag för att ge en balanserad bild av både front- och backend.",
+            thinking: agentThinking,
         };
     } else {
         // Default till frontend
@@ -194,6 +291,7 @@ async function getAIAgentTip() {
             prefix: "💡 **Dagens frontend-tips:**",
             reasoning:
                 "Jag valde frontend-tips idag eftersom det är vad de flesta användarna är intresserade av.",
+            thinking: agentThinking,
         };
     }
 }
@@ -224,7 +322,7 @@ client.once("ready", () => {
                 try {
                     // Inkludera AI:ns resonemang för ökad transparens
                     channel.send(
-                        `${agentResponse.prefix}\n${safeTip}\n\n_${agentResponse.reasoning}_`
+                        `${agentResponse.prefix}\n${safeTip}\n\n_${agentResponse.reasoning}_\n\n_${agentResponse.thinking}_`
                     );
                 } catch (err) {
                     console.error("Kunde inte skicka meddelande:", err);
@@ -280,7 +378,7 @@ client.on("messageCreate", async (message) => {
                 ? agentResponse.tip.slice(0, MAX_LENGTH - 3) + "..."
                 : agentResponse.tip;
         message.channel.send(
-            `${agentResponse.prefix}\n${safeTip}\n\n_${agentResponse.reasoning}_`
+            `${agentResponse.prefix}\n${safeTip}\n\n_${agentResponse.reasoning}_\n\n_${agentResponse.thinking}_`
         );
     }
 });
