@@ -25,22 +25,25 @@ export class DiscordService {
         // Interna tillstånd
         this.isReady = false;
         this.scheduledJob = null;
-        this._eventHandlersSetup = false;
     }
     /**
      * Initialiserar Discord-klienten och sätter upp event handlers
      */
     async initialize() {
         try {
-            // Kontrollera om event handlers redan är uppsatta
-            if (!this._eventHandlersSetup) {
-                // Sätt upp event handlers
-                this.setupEventHandlers();
-                this._eventHandlersSetup = true;
-            }
+            console.log("Initializing Discord service...");
+
+            // Rensa alla befintliga event listeners för att undvika duplicering
+            this.client.removeAllListeners();
+
+            // Sätt upp event handlers med endast en instans
+            this.setupEventHandlers();
+
+            console.log("Event handlers set up");
 
             // Logga in till Discord
             await this.client.login(this.token);
+            console.log("Logged in to Discord");
 
             return this;
         } catch (error) {
@@ -48,18 +51,33 @@ export class DiscordService {
             throw error;
         }
     }
+
     /**
      * Sätter upp event handlers för Discord-klienten
      */
     setupEventHandlers() {
-        // När boten är redo
+        console.log("Setting up event handlers...");
+
+        // När boten är redo - använd once för att säkerställa att detta endast händer en gång
         this.client.once("ready", () => {
             console.log(`🤖 Bot inloggad som ${this.client.user.tag}`);
             this.isReady = true;
 
             // Sätt upp schemalagd uppgift
             this.scheduleDaily();
-        }); // När ett meddelande tas emot
+        });
+
+        // Logga alla befintliga listeners innan vi lägger till vår egen
+        console.log(
+            `Current messageCreate listeners: ${this.client.listenerCount(
+                "messageCreate"
+            )}`
+        );
+
+        // Ta bort alla befintliga messageCreate event listeners för att undvika dubbla anrop
+        this.client.removeAllListeners("messageCreate");
+
+        // Lägg till en ny message event listener
         this.client.on("messageCreate", async (message) => {
             // Ignorera meddelanden från andra bottar
             if (message.author.bot) return;
@@ -70,7 +88,7 @@ export class DiscordService {
                     `Command received: ${message.content} from ${message.author.tag}`
                 );
 
-                // Hantera olika kommandon - använd exakt matchning för att undvika dubbla anrop
+                // Hantera olika kommandon med exakt matchning
                 const command = message.content.trim();
 
                 // Använd en switch-sats för att hantera commands och säkerställ att endast ett command körs
