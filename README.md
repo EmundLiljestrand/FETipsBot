@@ -2,9 +2,6 @@
 
 En Discord-bot som genererar programmeringstips inom frontend, backend och fullstack med hjälp av Google Gemini och MongoDB.
 
-## Översikt
-
-Denna bot använder Google Gemini AI för att generera anpassade programmeringstips som kan skickas till Discord. Boten fungerar som en intelligent agent som analyserar tidigare tips för att variera innehållet och anpassa svårighetsgraden.
 
 ## Kommandostruktur
 
