@@ -36,11 +36,13 @@ async function getAIGeneratedTip() {
     const db = mongo.db(dbName);
     const tipsCol = db.collection(collectionName);
 
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
     let tip = "";
     let tries = 0;
+    let normalizedTip = "";
     do {
         tries++;
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: { temperature: 1.5 },
@@ -48,7 +50,7 @@ async function getAIGeneratedTip() {
         const response = await result.response;
         tip = response.text();
         // Kolla om tipset redan finns i databasen
-        const normalizedTip = tip.trim().toLowerCase();
+        normalizedTip = tip.trim().toLowerCase();
         const exists = await tipsCol.findOne({ text: normalizedTip });
         if (!exists && tip) {
             await tipsCol.insertOne({
@@ -56,14 +58,13 @@ async function getAIGeneratedTip() {
                 date: new Date(),
                 category: "frontend",
                 difficulty: "avancerad",
-                topics: ["CSS", "JavaScript", "React"], // Extrahera från tipset med AI
-                feedback: [], // Plats för framtida användares feedback
+                topics: ["CSS", "JavaScript", "React"],
+                feedback: [],
             });
             break;
         }
     } while (tries < 5);
 
-    // Efter att tipset har skickats:
     const reflectionPrompt =
         `Analysera detta tips som just skickades: "${tip}". ` +
         "Vad var bra med det? Vad kan förbättras nästa gång? " +
@@ -96,11 +97,13 @@ async function getAIGeneratedBackendTip(difficulty = "medel") {
     const db = mongo.db(dbName);
     const tipsCol = db.collection("backend_tips");
 
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
     let tip = "";
     let tries = 0;
+    let normalizedTip = ""; // Definiera utanför loopen
     do {
         tries++;
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: { temperature: 1.5 },
@@ -108,7 +111,7 @@ async function getAIGeneratedBackendTip(difficulty = "medel") {
         const response = await result.response;
         tip = response.text();
         // Kolla om tipset redan finns i databasen
-        const normalizedTip = tip.trim().toLowerCase();
+        normalizedTip = tip.trim().toLowerCase();
         const exists = await tipsCol.findOne({ text: normalizedTip });
         if (!exists && tip) {
             await tipsCol.insertOne({
@@ -116,8 +119,8 @@ async function getAIGeneratedBackendTip(difficulty = "medel") {
                 date: new Date(),
                 category: "backend",
                 difficulty: difficulty,
-                topics: ["databaser", "API", "säkerhet"], // Extrahera från tipset med AI
-                feedback: [], // Plats för framtida användares feedback
+                topics: ["databaser", "API", "säkerhet"],
+                feedback: [],
             });
             break;
         }
@@ -156,11 +159,13 @@ async function getAIGeneratedFullstackTip() {
     const db = mongo.db(dbName);
     const tipsCol = db.collection("fullstack_tips");
 
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
     let tip = "";
     let tries = 0;
+    let normalizedTip = ""; // Definiera utanför loopen
     do {
         tries++;
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
         const result = await model.generateContent({
             contents: [{ role: "user", parts: [{ text: prompt }] }],
             generationConfig: { temperature: 1.5 },
@@ -168,7 +173,7 @@ async function getAIGeneratedFullstackTip() {
         const response = await result.response;
         tip = response.text();
         // Kolla om tipset redan finns i databasen
-        const normalizedTip = tip.trim().toLowerCase();
+        normalizedTip = tip.trim().toLowerCase();
         const exists = await tipsCol.findOne({ text: normalizedTip });
         if (!exists && tip) {
             await tipsCol.insertOne({
@@ -176,8 +181,8 @@ async function getAIGeneratedFullstackTip() {
                 date: new Date(),
                 category: "fullstack",
                 difficulty: "medel",
-                topics: ["integration", "skalbarhet", "prestanda"], // Extrahera från tipset med AI
-                feedback: [], // Plats för framtida användares feedback
+                topics: ["integration", "skalbarhet", "prestanda"],
+                feedback: [],
             });
             break;
         }
@@ -260,7 +265,6 @@ async function getAIAgentTip() {
     });
     const agentThinking = thinkingResult.response.text().trim();
 
-    // Låt agenten också bestämma svårighetsnivån:
     let difficulty = "medel"; // Default
     if (agentThinking.toLowerCase().includes("nybörjare")) {
         difficulty = "nybörjare";
