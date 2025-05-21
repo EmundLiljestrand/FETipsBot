@@ -1,11 +1,11 @@
 {
     "name": "disc-bot",
     "version": "1.0.0",
-    "description": "En intelligent Discord-bot som genererar programmeringstips med hjälp av Google Gemini AI",
-    "main": "src/index.js",
+    "description": "En Discord-bot som genererar programmeringstips med hjälp av Google Gemini AI",
+    "main": "index.js",
     "scripts": {
-        "start": "node src/index.js",
-        "dev": "nodemon src/index.js"
+        "start": "node index.js",
+        "dev": "nodemon index.js"
     },
     "keywords": [],
     "author": "",
