@@ -534,7 +534,7 @@ export class ProgrammingTipsAgent {
                 Tidigare tips inom samma kategori:
                 ${previousTips.map((t, i) => `${i + 1}. ${t}`).join("\n")}
                 
-                Svårighetsgrad: ${difficulty}
+                Svårighetsgrad: ${difficulty} 
                 
                 Bedöm tipset enligt följande kriterier på en skala 1-10:
                 1. UNIKHET: Är tipset tillräckligt annorlunda från tidigare tips? (1 = duplikat, 10 = helt ny information)
@@ -551,7 +551,9 @@ export class ProgrammingTipsAgent {
                     "total_score": x,
                     "approved": true/false,
                     "reason": "kort förklaring till beslutet"
-                }`;
+                }
+                
+                VIKTIGT: Svara med ENDAST JSON-objektet, UTAN kodblock eller backticks.`;
 
             const result = await this.verifierModel.generateContent({
                 contents: [
@@ -560,22 +562,44 @@ export class ProgrammingTipsAgent {
             });
 
             const responseText = result.response.text().trim();
+            console.log("Raw verification response:", responseText);
 
             try {
+                // Ta bort markdown-kodblock om det finns
+                let jsonText = responseText;
+
+                // Kontrollera och ta bort markdown ```json och avslutande ``` om de finns
+                if (jsonText.startsWith("```") && jsonText.endsWith("```")) {
+                    // Ta bort första raden (```json eller liknande)
+                    jsonText = jsonText.substring(jsonText.indexOf("\n") + 1);
+                    // Ta bort sista raden (```)
+                    jsonText = jsonText
+                        .substring(0, jsonText.lastIndexOf("```"))
+                        .trim();
+                }
+
                 // Försök tolka svaret som JSON
-                const assessment = JSON.parse(responseText);
+                const assessment = JSON.parse(jsonText);
                 console.log(
                     `Tip verification results: ${JSON.stringify(assessment)}`
                 );
 
                 // Godkänn tipset om totalpoängen är 7 eller högre, eller om approved är true
+                const totalScore =
+                    assessment.total_score ||
+                    ((assessment.uniqueness || 0) +
+                        (assessment.relevance || 0) +
+                        (assessment.correctness || 0) +
+                        (assessment.difficulty_match || 0)) /
+                        4;
+
                 return {
                     approved:
                         assessment.approved === undefined
-                            ? assessment.total_score >= 7
+                            ? totalScore >= 7
                             : assessment.approved,
                     reason: assessment.reason || "Ingen motivering tillgänglig",
-                    score: assessment.total_score || 0,
+                    score: totalScore,
                 };
             } catch (jsonError) {
                 console.warn(
@@ -583,23 +607,73 @@ export class ProgrammingTipsAgent {
                     jsonError
                 );
                 console.log("Raw response:", responseText);
-                // Om JSON-tolkning misslyckas, utgå från att det är OK (fallback)
+
+                // Försök med en enklare JSON-extraktionsmetod
+                try {
+                    // Leta efter allt mellan första { och sista }
+                    const jsonMatch = responseText.match(/\{(.|\n)*\}/);
+                    if (jsonMatch) {
+                        const extractedJson = jsonMatch[0];
+                        const assessment = JSON.parse(extractedJson);
+                        console.log(
+                            `Extracted JSON verification results: ${JSON.stringify(
+                                assessment
+                            )}`
+                        );
+
+                        // Beräkna totalpoäng om den saknas
+                        const totalScore =
+                            assessment.total_score ||
+                            ((assessment.uniqueness || 0) +
+                                (assessment.relevance || 0) +
+                                (assessment.correctness || 0) +
+                                (assessment.difficulty_match || 0)) /
+                                4;
+
+                        return {
+                            approved:
+                                assessment.approved === undefined
+                                    ? totalScore >= 7
+                                    : assessment.approved,
+                            reason:
+                                assessment.reason ||
+                                "Ingen motivering tillgänglig",
+                            score: totalScore,
+                        };
+                    }
+                } catch (extractError) {
+                    console.warn(
+                        "Failed to extract JSON using regex:",
+                        extractError
+                    );
+                }
+
+                // Om alla JSON-tolkningsförsök misslyckas, bedöm manuellt baserat på textinnehåll
+                const lowercaseResponse = responseText.toLowerCase();
+                const hasRejectionIndicators =
+                    lowercaseResponse.includes("not approved") ||
+                    lowercaseResponse.includes("rejected") ||
+                    lowercaseResponse.includes("approved: false");
+
                 return {
-                    approved: true,
-                    reason: "Kunde inte tolka verifieringssvaret",
-                    score: 0,
+                    approved: !hasRejectionIndicators, // Godkänn om inga indikationer på avvisning
+                    reason: hasRejectionIndicators
+                        ? "Avvisat baserat på textanalys"
+                        : "Godkänt baserat på textanalys (kunde inte parsa JSON)",
+                    score: hasRejectionIndicators ? 4 : 7,
                 };
             }
         } catch (error) {
             console.error("Error in tip verification:", error);
-            // Vid fel, låt tipset gå igenom
+            // Vid fel, låt tipset gå igenom men markera det tydligt
             return {
                 approved: true,
-                reason: "Ett fel uppstod vid verifiering",
-                score: 0,
+                reason: "Ett fel uppstod vid verifiering - godkänt med varning",
+                score: 5, // Neutral poäng
             };
         }
     }
+
     /**
      * Huvud-metoden som orkestrerar alla agentens funktioner för att generera dagens tips
      */
