@@ -6,7 +6,8 @@
     "scripts": {
         "start": "node index.js",
         "dev": "nodemon index.js",
-        "clear-db": "node scripts/clear-database.js"
+        "clear-db": "node scripts/clear-database.js",
+        "test-verify": "node scripts/test-verification.js"
     },
     "keywords": [],
     "author": "",
