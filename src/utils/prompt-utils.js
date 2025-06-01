@@ -12,8 +12,6 @@ export function generatePrompt(type, context) {
     switch (type) {
         case "recommendCategory":
             return generateCategoryRecommendationPrompt(context);
-        case "determineDifficulty":
-            return generateDifficultyPrompt(context);
         case "frontendTip":
             return generateFrontendTipPrompt(context);
         case "backendTip":
@@ -68,34 +66,9 @@ function generateCategoryRecommendationPrompt({
 }
 
 /**
- * Genererar prompt för att bestämma svårighetsgrad
- */
-function generateDifficultyPrompt({
-    category,
-    recentCategoryTips,
-    reflections,
-}) {
-    return (
-        `Du är en AI-agent som ansvarar för att välja svårighetsgrad för ${category.toLowerCase()}-tips. ` +
-        "Baserat på tidigare tips och reflektioner, välj om dagens tips ska vara för " +
-        "NYBÖRJARE, MEDEL eller AVANCERAD nivå. " +
-        "Försök variera svårighetsgrad över tid, men också ta hänsyn till vad som verkar fungera bäst. " +
-        "\n\nSenaste tips i denna kategori:\n" +
-        recentCategoryTips
-            .map((t) => `- ${t.difficulty}: ${t.text.substring(0, 100)}...`)
-            .join("\n") +
-        "\n\nTidigare reflektioner:\n" +
-        reflections
-            .map((r) => `- ${r.reflection.substring(0, 100)}...`)
-            .join("\n") +
-        "\n\nSvara ENDAST med ett av alternativen: NYBÖRJARE, MEDEL eller AVANCERAD."
-    );
-}
-
-/**
  * Genererar prompt för frontend-tips
  */
-function generateFrontendTipPrompt({ difficulty, randomSeed, recentTips }) {
+function generateFrontendTipPrompt({ randomSeed, recentTips }) {
     // Analysera tidigare tips för att undvika att upprepa liknande ämnen
     const recentTopics = recentTips.map((tip) => {
         // Försök identifiera huvudämnet i tipset
@@ -119,9 +92,8 @@ function generateFrontendTipPrompt({ difficulty, randomSeed, recentTips }) {
         avoidTopics +=
             "Undvik React-specifika tips om möjligt eftersom de nyligen täckts. ";
     }
-
     return (
-        `Ge exakt 3 användbara, ${difficulty} och mindre kända tips inom frontendutveckling som passar studenter år 2025. ` +
+        `Ge exakt 3 användbara och mindre kända tips inom frontendutveckling som passar och är relevanta för år 2025. ` +
         `${avoidTopics}` +
         "Varje tips ska vara max 2 meningar långt. " +
         "Avsluta med att kort förklara 1 koncept inom frontendutveckling på max 3 meningar. " +
@@ -133,7 +105,7 @@ function generateFrontendTipPrompt({ difficulty, randomSeed, recentTips }) {
 /**
  * Genererar prompt för backend-tips
  */
-function generateBackendTipPrompt({ difficulty, randomSeed, recentTips }) {
+function generateBackendTipPrompt({ randomSeed, recentTips }) {
     // Analysera tidigare tips för att undvika att upprepa liknande ämnen
     const recentTopics = recentTips.map((tip) => {
         const lowerText = tip.text.toLowerCase();
@@ -155,9 +127,8 @@ function generateBackendTipPrompt({ difficulty, randomSeed, recentTips }) {
         avoidTopics +=
             "Undvik API-specifika tips om möjligt eftersom de nyligen täckts. ";
     }
-
     return (
-        `Ge exakt 3 ${difficulty} och pedagogiska tips inom backendutveckling som passar nybörjare eller studenter år 2025. ` +
+        `Ge exakt 3 tips inom backendutveckling som passar och är relevanta för år 2025. ` +
         `${avoidTopics}` +
         "Varje tips ska vara max 2 meningar långt. " +
         "Avsluta med att kort förklara 1 grundläggande koncept inom backendutveckling på max 3 meningar. " +
@@ -169,7 +140,7 @@ function generateBackendTipPrompt({ difficulty, randomSeed, recentTips }) {
 /**
  * Genererar prompt för fullstack-tips
  */
-function generateFullstackTipPrompt({ difficulty, randomSeed, recentTips }) {
+function generateFullstackTipPrompt({ randomSeed, recentTips }) {
     // Analysera tidigare tips
     const recentTopics = recentTips.map((tip) => {
         const lowerText = tip.text.toLowerCase();
@@ -195,9 +166,8 @@ function generateFullstackTipPrompt({ difficulty, randomSeed, recentTips }) {
         avoidTopics +=
             "Undvik prestanda-optimeringstips om möjligt eftersom de nyligen täckts. ";
     }
-
     return (
-        `Ge exakt 3 ${difficulty} tips, tricks, tekniker eller trender inom fullstackutveckling (både frontend och backend) som är relevanta för 2025. ` +
+        `Ge exakt 3 tips, tricks, tekniker eller trender inom fullstackutveckling (både frontend och backend) som är relevanta för 2025. ` +
         `${avoidTopics}` +
         "Varje tips ska vara max 2 meningar långt. " +
         "Avsluta med att kort förklara 1 grundläggande koncept inom fullstackutveckling på max 3 meningar. " +

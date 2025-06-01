@@ -9,20 +9,15 @@ export const config = {
         tipsCollection: "all_tips",
         reflectionsCollection: "agent_reflections",
         statsCollection: "agent_stats",
-    },
-
-    // Discord settings
+    }, // Discord settings
     discord: {
         tipChannelId: "1373995255971582003",
-        scheduleTime: "0 9 * * *", // Kl 9:00 varje dag
+        scheduleTime: "0 9 * * 1-5", // Kl 9:00 måndag-fredag (weekdays only)
         timezone: "Europe/Stockholm",
-    },
-
-    // AI Agent settings
+    }, // AI Agent settings
     agent: {
-        defaultDifficulty: "medel",
         maxTipLength: 2000, // Max tecken för Discord
-        model: "gemini-2.0-flash",
+        model: "gemini-2.5-pro-preview-05-06",
         temperature: 1.5,
     },
 

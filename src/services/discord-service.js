@@ -10,7 +10,7 @@ export class DiscordService {
         this.tipAgent = tipAgent;
         this.channelId = config.channelId || "1373995255971582003"; // Default eller från config
         this.MAX_LENGTH = 2000; // Discord meddelandegräns
-        this.scheduleTime = config.scheduleTime || "0 9 * * *"; // Default 09:00
+        this.scheduleTime = config.scheduleTime || "0 9 * * 1-5"; // Default 09:00, Monday-Friday only
         this.timezone = config.timezone || "Europe/Stockholm";
 
         // Skapa Discord-klienten
@@ -194,6 +194,33 @@ export class DiscordService {
             `Scheduled daily tip at "${this.scheduleTime}" (${this.timezone})`
         );
     }
+    /**
+     * Bestämmer vilken kategori som ska skickas baserat på veckodagens rotation
+     * Måndag: frontend, Tisdag: backend, Onsdag: fullstack, Torsdag: frontend, Fredag: backend
+     */
+    getTodayCategory() {
+        const today = new Date();
+        const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+
+        switch (dayOfWeek) {
+            case 1: // Måndag
+                return "frontend";
+            case 2: // Tisdag
+                return "backend";
+            case 3: // Onsdag
+                return "fullstack";
+            case 4: // Torsdag
+                return "frontend";
+            case 5: // Fredag
+                return "backend";
+            default:
+                // Weekends should not happen due to cron schedule, but fallback to frontend
+                console.warn(
+                    `Unexpected day of week for tip generation: ${dayOfWeek}`
+                );
+                return "frontend";
+        }
+    }
 
     /**
      * Skickar ett dagligt tips
@@ -202,7 +229,13 @@ export class DiscordService {
         try {
             const channel = await this.client.channels.fetch(this.channelId);
             if (channel && channel.isTextBased()) {
-                const agentResponse = await this.tipAgent.generateDailyTip();
+                // Bestäm kategori baserat på veckodagens rotation
+                const category = this.getTodayCategory();
+                console.log(`Sending ${category} tip for today`);
+
+                const agentResponse = await this.tipAgent.generateDailyTip(
+                    category
+                );
 
                 // Skicka tipset utan resonemang/tänkande
                 await channel.send(
@@ -210,7 +243,7 @@ export class DiscordService {
                         agentResponse.tip
                     )}`
                 );
-                console.log("Daily tip sent successfully");
+                console.log(`Daily ${category} tip sent successfully`);
 
                 return true;
             } else {
