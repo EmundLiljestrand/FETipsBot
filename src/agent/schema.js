@@ -6,15 +6,12 @@
 export const AgentSchema = {
     name: "ProgrammingTipsAgent",
     description:
-        "En AI-agent som ger anpassade programmeringstips baserat på användarmönster och tidigare tips",
-
-    // De förmågor agenten har
+        "En AI-agent som ger anpassade programmeringstips baserat på användarmönster och tidigare tips", // De förmågor agenten har
     capabilities: [
         "generateTips",
         "analyzePastTips",
         "recommendCategory",
         "selfReflect",
-        "determineDifficulty",
     ],
 
     // Strukturen för olika datatyper
@@ -24,11 +21,6 @@ export const AgentSchema = {
             category: {
                 type: "string",
                 enum: ["frontend", "backend", "fullstack"],
-                required: true,
-            },
-            difficulty: {
-                type: "string",
-                enum: ["nybörjare", "medel", "avancerad"],
                 required: true,
             },
             topics: { type: "array", items: { type: "string" } },
@@ -54,12 +46,9 @@ export const AgentSchema = {
             },
             categoryStats: { type: "object" },
         },
-    },
-
-    // Typerna av programmeringstips agenten kan ge
+    }, // Typerna av programmeringstips agenten kan ge
     tipTypes: {
         frontend: {
-            defaultDifficulty: "medel",
             topicAreas: [
                 "CSS",
                 "JavaScript",
@@ -70,10 +59,16 @@ export const AgentSchema = {
                 "UX/UI",
                 "Animering",
                 "Prestanda",
+                "TypeScript",
+                "Accessibility",
+                "Mobile-first design",
+                "Web Components",
+                "Progressive Web Apps",
+                "Browser DevTools",
+                "Responsive Design",
             ],
         },
         backend: {
-            defaultDifficulty: "medel",
             topicAreas: [
                 "Databaser",
                 "API",
@@ -83,10 +78,17 @@ export const AgentSchema = {
                 "Security",
                 "Performance",
                 "Testing",
+                "Microservices",
+                "Caching",
+                "Error Handling",
+                "Logging",
+                "Database Design",
+                "REST APIs",
+                "GraphQL",
+                "Serverless",
             ],
         },
         fullstack: {
-            defaultDifficulty: "medel",
             topicAreas: [
                 "Integration",
                 "Deployment",
@@ -94,6 +96,16 @@ export const AgentSchema = {
                 "Arkitektur",
                 "Authentication",
                 "State Management",
+                "CI/CD",
+                "Docker",
+                "Cloud Services",
+                "Monitoring",
+                "Version Control",
+                "Code Review",
+                "Project Structure",
+                "API Design",
+                "Database Migration",
+                "Performance Optimization",
             ],
         },
     },

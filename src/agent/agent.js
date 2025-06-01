@@ -6,12 +6,11 @@ import { generatePrompt } from "../utils/prompt-utils.js";
  */
 export class ProgrammingTipsAgent {
     constructor(aiClient, db) {
-        this.aiClient = aiClient;
-        // Initialisera primär modell för generering (Gemini 2.0)
+        this.aiClient = aiClient; // Initialisera primär modell för generering (Gemini 2.5 Pro)
         this.generatorModel = aiClient.getGenerativeModel({
-            model: "gemini-2.0-flash",
+            model: "gemini-2.5-pro-preview-05-06",
         });
-        // Initialisera sekundär modell för verifiering (Gemini 2.5)
+        // Initialisera sekundär modell för verifiering (Gemini 2.5 Flash)
         this.verifierModel = aiClient.getGenerativeModel({
             model: "gemini-2.5-flash-preview-05-20",
         });
@@ -130,57 +129,20 @@ export class ProgrammingTipsAgent {
             return "FRONTEND"; // Fallback
         }
     }
-
     /**
      * Bestämmer svårighetsgrad baserat på tidigare tips och användarmönster
      */
     async determineDifficulty(category) {
-        try {
-            // Hämta de senaste tipsen av den valda kategorin
-            const recentCategoryTips = this.memory.recentTips
-                .filter((t) => t.category === category.toLowerCase())
-                .slice(0, 7);
-
-            // Använd tidigare reflektioner för att fatta ett bättre beslut
-            const relevantReflections = this.memory.reflections
-                .filter((r) => r.category === category.toLowerCase())
-                .slice(0, 3);
-
-            const context = {
-                category,
-                recentCategoryTips,
-                reflections: relevantReflections,
-            }; // Generera prompt för svårighetsgrad
-            const prompt = generatePrompt("determineDifficulty", context);
-
-            const result = await this.generatorModel.generateContent({
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-            });
-
-            const response = result.response.text().trim().toLowerCase();
-
-            // Extrahera svårighetsgraden från svaret
-            if (response.includes("nybörjare")) {
-                return "nybörjare";
-            } else if (response.includes("avancerad")) {
-                return "avancerad";
-            } else {
-                return "medel";
-            }
-        } catch (error) {
-            console.error("Error determining difficulty:", error);
-            return "medel"; // Fallback
-        }
+        // Denna metod är nu deprecated - svårighetsgrad används inte längre
+        return "medel"; // Returnerar alltid medel för bakåtkompatibilitet
     }
-
     /**
-     * Genererar frontend-tips med given svårighetsgrad
+     * Genererar frontend-tips
      */
-    async generateFrontendTip(difficulty = "medel") {
+    async generateFrontendTip() {
         try {
             const randomSeed = Math.floor(Math.random() * 100000);
             const context = {
-                difficulty,
                 randomSeed,
                 recentTips: this.memory.recentTips
                     .filter((t) => t.category === "frontend")
@@ -222,8 +184,7 @@ export class ProgrammingTipsAgent {
                     // Verifiera tipset med Gemini 2.5
                     verificationResult = await this.verifyTipQuality(
                         tip,
-                        "frontend",
-                        difficulty
+                        "frontend"
                     );
                     isApproved = verificationResult.approved;
 
@@ -239,7 +200,6 @@ export class ProgrammingTipsAgent {
                         text: normalizedTip,
                         date: new Date(),
                         category: "frontend",
-                        difficulty: difficulty,
                         topics: ["CSS", "JavaScript", "React"],
                         feedback: [],
                         verificationScore: verificationResult.score || 0,
@@ -250,7 +210,6 @@ export class ProgrammingTipsAgent {
                         text: normalizedTip,
                         date: new Date(),
                         category: "frontend",
-                        difficulty: difficulty,
                     });
 
                     this.memory.categoryStats.frontend.count++;
@@ -271,15 +230,13 @@ export class ProgrammingTipsAgent {
             return "Ett fel uppstod när frontend-tipset skulle genereras.";
         }
     }
-
     /**
-     * Genererar backend-tips med given svårighetsgrad
+     * Genererar backend-tips
      */
-    async generateBackendTip(difficulty = "medel") {
+    async generateBackendTip() {
         try {
             const randomSeed = Math.floor(Math.random() * 100000);
             const context = {
-                difficulty,
                 randomSeed,
                 recentTips: this.memory.recentTips
                     .filter((t) => t.category === "backend")
@@ -319,8 +276,7 @@ export class ProgrammingTipsAgent {
                     // Verifiera tipset med Gemini 2.5
                     verificationResult = await this.verifyTipQuality(
                         tip,
-                        "backend",
-                        difficulty
+                        "backend"
                     );
                     isApproved = verificationResult.approved;
 
@@ -336,7 +292,6 @@ export class ProgrammingTipsAgent {
                         text: normalizedTip,
                         date: new Date(),
                         category: "backend",
-                        difficulty: difficulty,
                         topics: ["databaser", "API", "säkerhet"],
                         feedback: [],
                         verificationScore: verificationResult.score || 0,
@@ -347,7 +302,6 @@ export class ProgrammingTipsAgent {
                         text: normalizedTip,
                         date: new Date(),
                         category: "backend",
-                        difficulty: difficulty,
                     });
 
                     this.memory.categoryStats.backend.count++;
@@ -366,15 +320,13 @@ export class ProgrammingTipsAgent {
             return "Ett fel uppstod när backend-tipset skulle genereras.";
         }
     }
-
     /**
      * Genererar fullstack-tips
      */
-    async generateFullstackTip(difficulty = "medel") {
+    async generateFullstackTip() {
         try {
             const randomSeed = Math.floor(Math.random() * 100000);
             const context = {
-                difficulty,
                 randomSeed,
                 recentTips: this.memory.recentTips
                     .filter((t) => t.category === "fullstack")
@@ -416,8 +368,7 @@ export class ProgrammingTipsAgent {
                     // Verifiera tipset med Gemini 2.5
                     verificationResult = await this.verifyTipQuality(
                         tip,
-                        "fullstack",
-                        difficulty
+                        "fullstack"
                     );
                     isApproved = verificationResult.approved;
 
@@ -433,7 +384,6 @@ export class ProgrammingTipsAgent {
                         text: normalizedTip,
                         date: new Date(),
                         category: "fullstack",
-                        difficulty: difficulty,
                         topics: ["integration", "skalbarhet", "prestanda"],
                         feedback: [],
                         verificationScore: verificationResult.score || 0,
@@ -444,7 +394,6 @@ export class ProgrammingTipsAgent {
                         text: normalizedTip,
                         date: new Date(),
                         category: "fullstack",
-                        difficulty: difficulty,
                     });
 
                     this.memory.categoryStats.fullstack.count++;
@@ -507,22 +456,19 @@ export class ProgrammingTipsAgent {
             return "Kunde inte genomföra reflektion.";
         }
     }
-
     /**
      * Verifierar kvalitet och unikhet på ett genererat tips med den avancerade Gemini 2.5 modellen
      * @param {string} tip - Tipset som ska verifieras
      * @param {string} category - Kategorin (frontend, backend, fullstack)
-     * @param {string} difficulty - Svårighetsgraden (nybörjare, medel, avancerad)
      * @returns {Promise<{approved: boolean, reason: string, score: number}>}
      */
-    async verifyTipQuality(tip, category, difficulty) {
+    async verifyTipQuality(tip, category) {
         try {
             // Hämta de senaste tipsen för jämförelse
             const previousTips = this.memory.recentTips
                 .filter((t) => t.category === category)
                 .slice(0, 5)
                 .map((t) => t.text);
-
             const verificationPrompt = `Du är en granskare för programmeringstips inom ${category}-utveckling. 
                 Din uppgift är att utvärdera om följande tips är lämpligt att skicka till våra användare:
                 
@@ -534,20 +480,16 @@ export class ProgrammingTipsAgent {
                 Tidigare tips inom samma kategori:
                 ${previousTips.map((t, i) => `${i + 1}. ${t}`).join("\n")}
                 
-                Svårighetsgrad: ${difficulty} 
-                
                 Bedöm tipset enligt följande kriterier på en skala 1-10:
                 1. UNIKHET: Är tipset tillräckligt annorlunda från tidigare tips? (1 = duplikat, 10 = helt ny information)
                 2. RELEVANS: Är tipset relevant för ${category}-utvecklare år 2025? (1 = irrelevant, 10 = mycket relevant)
                 3. KORREKTHET: Är innehållet tekniskt korrekt? (1 = felaktigt, 10 = helt korrekt)
-                4. SVÅRIGHETSNIVÅ: Motsvarar svårighetsgraden "${difficulty}"? (1 = helt fel nivå, 10 = perfekt nivå)
                 
                 Svara ENDAST med ett JSON-objekt med följande format:
                 {
                     "uniqueness": x,
                     "relevance": x,
                     "correctness": x,
-                    "difficulty_match": x,
                     "total_score": x,
                     "approved": true/false,
                     "reason": "kort förklaring till beslutet"
@@ -582,16 +524,13 @@ export class ProgrammingTipsAgent {
                 const assessment = JSON.parse(jsonText);
                 console.log(
                     `Tip verification results: ${JSON.stringify(assessment)}`
-                );
-
-                // Godkänn tipset om totalpoängen är 7 eller högre, eller om approved är true
+                ); // Godkänn tipset om totalpoängen är 7 eller högre, eller om approved är true
                 const totalScore =
                     assessment.total_score ||
                     ((assessment.uniqueness || 0) +
                         (assessment.relevance || 0) +
-                        (assessment.correctness || 0) +
-                        (assessment.difficulty_match || 0)) /
-                        4;
+                        (assessment.correctness || 0)) /
+                        3;
 
                 return {
                     approved:
@@ -619,16 +558,13 @@ export class ProgrammingTipsAgent {
                             `Extracted JSON verification results: ${JSON.stringify(
                                 assessment
                             )}`
-                        );
-
-                        // Beräkna totalpoäng om den saknas
+                        ); // Beräkna totalpoäng om den saknas
                         const totalScore =
                             assessment.total_score ||
                             ((assessment.uniqueness || 0) +
                                 (assessment.relevance || 0) +
-                                (assessment.correctness || 0) +
-                                (assessment.difficulty_match || 0)) /
-                                4;
+                                (assessment.correctness || 0)) /
+                                3;
 
                         return {
                             approved:
@@ -673,43 +609,57 @@ export class ProgrammingTipsAgent {
             };
         }
     }
-
     /**
      * Huvud-metoden som orkestrerar alla agentens funktioner för att generera dagens tips
+     * @param {string} specificCategory - Optional specific category (frontend, backend, fullstack)
      */
-    async generateDailyTip() {
+    async generateDailyTip(specificCategory = null) {
         try {
-            // 1. Slumpmässigt val av kategori (frontend, backend, fullstack)
-            const categories = ["FRONTEND", "BACKEND", "FULLSTACK"];
-            const category =
-                categories[Math.floor(Math.random() * categories.length)];
-            console.log(`Random category selected: ${category}`);
+            let category;
 
-            // 2. Bestäm lämplig svårighetsgrad
-            const difficulty = await this.determineDifficulty(category);
-            console.log(`Agent recommends difficulty: ${difficulty}`);
+            if (specificCategory) {
+                // Use the specified category for scheduled rotation
+                category = specificCategory.toUpperCase();
+                console.log(
+                    `Using specified category for rotation: ${category}`
+                );
+            } else {
+                // Fallback to random selection for manual commands
+                const categories = ["FRONTEND", "BACKEND", "FULLSTACK"];
+                category =
+                    categories[Math.floor(Math.random() * categories.length)];
+                console.log(`Random category selected: ${category}`);
+            }
 
             let tip, prefix;
 
-            // 3. Generera tipset i vald kategori och svårighetsgrad
+            // 2. Generera tipset i vald kategori
             if (category === "BACKEND") {
-                tip = await this.generateBackendTip(difficulty);
-                prefix = `🛠️ **Dagens ${difficulty} backend-tips:**`;
+                tip = await this.generateBackendTip();
+                prefix = `🛠️ **Dagens backend-tips:**`;
             } else if (category === "FULLSTACK") {
-                tip = await this.generateFullstackTip(difficulty);
+                tip = await this.generateFullstackTip();
                 prefix = "🌐 **Dagens fullstack-tips:**";
             } else {
                 // Default till frontend
-                tip = await this.generateFrontendTip(difficulty);
-                prefix = `💡 **Dagens ${difficulty} frontend-tips:**`;
-            } // 4. Generera agentens förklaring av sitt tänkande
-            const thinkingPrompt =
-                "Du är en AI-agent som ansvarar för att generera programmeringstips. " +
-                `En slumpmässigt vald kategori blev ${category} med svårighetsgraden ${difficulty}. ` +
-                "Förklara vad som är intressant med denna kategori och: " +
-                "1. Varför denna svårighetsgrad kan vara lämplig? " +
-                "2. Vilka typer av koncept som kan vara lärorika inom denna kategori? " +
-                "3. Vad är nästa steg för att förbättra framtida tips?";
+                tip = await this.generateFrontendTip();
+                prefix = `💡 **Dagens frontend-tips:**`;
+            }
+
+            // 3. Generera agentens förklaring av sitt tänkande
+            const thinkingPrompt = specificCategory
+                ? `Du är en AI-agent som ansvarar för att generera programmeringstips. ` +
+                  `Dagens kategori är ${category} enligt rotationsschemat (måndag-fredag). ` +
+                  "Förklara vad som är intressant med denna kategori och: " +
+                  "1. Vilka typer av koncept som kan vara lärorika inom denna kategori? " +
+                  "2. Vad är nästa steg för att förbättra framtida tips? " +
+                  "3. Varför är denna kategori viktig för utvecklare idag?"
+                : "Du är en AI-agent som ansvarar för att generera programmeringstips. " +
+                  `En slumpmässigt vald kategori blev ${category}. ` +
+                  "Förklara vad som är intressant med denna kategori och: " +
+                  "1. Vilka typer av koncept som kan vara lärorika inom denna kategori? " +
+                  "2. Vad är nästa steg för att förbättra framtida tips? " +
+                  "3. Varför är denna kategori viktig för utvecklare idag?";
 
             const thinkingResult = await this.generatorModel.generateContent({
                 contents: [{ role: "user", parts: [{ text: thinkingPrompt }] }],
@@ -717,22 +667,20 @@ export class ProgrammingTipsAgent {
 
             const agentThinking = thinkingResult.response.text().trim();
 
-            // 5. Returnera tipset med metadata
+            // 4. Returnera tipset med metadata
             return {
                 tip,
                 prefix,
                 category: category.toLowerCase(),
-                difficulty,
                 thinking: agentThinking,
             };
         } catch (error) {
             console.error("Error in AI agent decision making:", error);
             // Fallback till frontend-tips
             return {
-                tip: await this.generateFrontendTip("medel"),
+                tip: await this.generateFrontendTip(),
                 prefix: "💡 **Dagens frontend-tips:**",
                 category: "frontend",
-                difficulty: "medel",
                 thinking:
                     "Ett fel uppstod vid beslut om vilken typ av tips som ska ges.",
             };
