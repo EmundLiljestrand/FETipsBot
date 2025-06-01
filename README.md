@@ -4,7 +4,6 @@ En Discord-bot som genererar programmeringstips inom frontend, backend och fulls
 
 ## Kommandostruktur
 
--   `!dagens-tips` - Visar ett frontend-tips
 -   `!frontend-tips` - Visar ett frontend-tips
 -   `!backend-tips` - Visar ett backend-tips
 -   `!fullstack-tips` - Visar ett fullstack-tips
